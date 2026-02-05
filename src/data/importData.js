@@ -14,6 +14,21 @@ export const HS_CHAPTERS_FALLBACK = [
   '73 — Изделия из чугуна или стали'
 ];
 
+export const HS_DATABASES = [
+  {
+    name: 'Официальная база (Israel)',
+    url: 'https://shaarolami-query.customs.mof.gov.il/'
+  },
+  {
+    name: 'World Customs Organization',
+    url: 'https://www.wcoomd.org/en/topics/nomenclature/hs-nomenclature/hs-nomenclature-2022-edition.aspx'
+  },
+  {
+    name: 'European TARIC',
+    url: 'https://ec.europa.eu/taxation_customs/dds2/taric/taric_consultation.jsp?Lang=en'
+  }
+];
+
 export const VAT = {
   standardRate: 12
 };

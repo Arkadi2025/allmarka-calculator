@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { COUNTRIES, HS_CHAPTERS, PORTS } from '../data/importData.js';
+import { COUNTRIES, HS_CHAPTERS, HS_DATABASES, PORTS } from '../data/importData.js';
 import { searchHsCode } from '../services/ai.js';
 
 export default function HsSection() {
@@ -50,6 +50,29 @@ export default function HsSection() {
               : 'Нет результатов'}
         </span>
       </form>
+
+      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-300">
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+          Внешние базы HS
+        </p>
+        <div className="mt-3 grid gap-2">
+          {HS_DATABASES.map((database) => (
+            <a
+              key={database.url}
+              href={database.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between rounded-xl border border-slate-800 px-3 py-2 text-sm text-slate-200 transition hover:border-brand-500 hover:text-white"
+            >
+              <span>{database.name}</span>
+              <span className="text-xs text-slate-500">Открыть ↗</span>
+            </a>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Если одна база недоступна, используйте резервную ссылку выше.
+        </p>
+      </div>
 
       <div className="mt-4 grid gap-4 text-sm text-slate-400">
         <div>
