@@ -1,8 +1,8 @@
-import { HS_CHAPTERS } from '../data/importData.js';
+import { HS_CHAPTERS, HS_CHAPTERS_FALLBACK } from '../data/importData.js';
 
 const normalize = (value) => value.trim().toLowerCase();
 
-const buildResult = (chapter) => {
+const buildResult = (chapter, source) => {
   if (!chapter) {
     return null;
   }
@@ -10,7 +10,8 @@ const buildResult = (chapter) => {
   return {
     code,
     label,
-    description: chapter
+    description: chapter,
+    source
   };
 };
 
@@ -29,8 +30,18 @@ export const searchHsCode = async (query) => {
   const textMatch = HS_CHAPTERS.find((chapter) =>
     normalize(chapter).includes(normalizedQuery)
   );
+  const fallbackCodeMatch = HS_CHAPTERS_FALLBACK.find((chapter) =>
+    normalize(chapter).startsWith(normalizedQuery)
+  );
+  const fallbackTextMatch = HS_CHAPTERS_FALLBACK.find((chapter) =>
+    normalize(chapter).includes(normalizedQuery)
+  );
 
-  const result = buildResult(codeMatch || textMatch);
+  const primaryMatch = codeMatch || textMatch;
+  const fallbackMatch = fallbackCodeMatch || fallbackTextMatch;
+  const result =
+    buildResult(primaryMatch, primaryMatch ? 'primary' : null) ||
+    buildResult(fallbackMatch, fallbackMatch ? 'backup' : null);
 
   return {
     query,

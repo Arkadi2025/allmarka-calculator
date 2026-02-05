@@ -44,7 +44,9 @@ export default function HsSection() {
           {status === 'loading'
             ? 'Поиск...'
             : result
-              ? `Найдено: ${result.code} — ${result.label}`
+              ? `Найдено: ${result.code} — ${result.label} (${
+                  result.source === 'backup' ? 'резервный источник' : 'основной источник'
+                })`
               : 'Нет результатов'}
         </span>
       </form>

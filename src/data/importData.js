@@ -7,6 +7,13 @@ export const HS_CHAPTERS = [
   '61 — Одежда трикотажная'
 ];
 
+export const HS_CHAPTERS_FALLBACK = [
+  '84 — Механические устройства',
+  '62 — Одежда текстильная',
+  '39 — Пластмассы и изделия из них',
+  '73 — Изделия из чугуна или стали'
+];
+
 export const VAT = {
   standardRate: 12
 };
