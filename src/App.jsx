@@ -4,6 +4,7 @@ const DEFAULTS = {
   price: 2500,
   shipping: 320,
   insurance: 60,
+  quantity: 120,
   dutyRate: 7.5,
   vatRate: 12,
   brokerage: 75
@@ -33,6 +34,7 @@ export default function App() {
     const price = toNumber(values.price);
     const shipping = toNumber(values.shipping);
     const insurance = toNumber(values.insurance);
+    const quantity = toNumber(values.quantity);
     const dutyRate = toNumber(values.dutyRate) / 100;
     const vatRate = toNumber(values.vatRate) / 100;
     const brokerage = toNumber(values.brokerage);
@@ -42,13 +44,17 @@ export default function App() {
     const vatBase = subtotal + duty + brokerage;
     const vat = vatBase * vatRate;
     const total = subtotal + duty + vat + brokerage;
+    const safeQuantity = quantity > 0 ? quantity : 1;
+    const perUnit = total / safeQuantity;
 
     return {
       subtotal,
       duty,
       vat,
       brokerage,
-      total
+      total,
+      perUnit,
+      quantity: safeQuantity
     };
   }, [values]);
 
@@ -115,6 +121,11 @@ export default function App() {
                   hint: 'Опционально, при расчёте рисков.'
                 },
                 {
+                  label: 'Количество единиц',
+                  name: 'quantity',
+                  hint: 'Нужно для расчёта себестоимости на единицу.'
+                },
+                {
                   label: 'Ставка пошлины, %',
                   name: 'dutyRate',
                   hint: 'Таможенная ставка по коду ТН ВЭД.'
@@ -139,7 +150,11 @@ export default function App() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">
-                      {field.name.includes('Rate') ? '%' : 'USD'}
+                      {field.name.includes('Rate')
+                        ? '%'
+                        : field.name === 'quantity'
+                          ? 'PCS'
+                          : 'USD'}
                     </span>
                     <input
                       type="number"
@@ -170,6 +185,10 @@ export default function App() {
                 <p className="mt-3 text-3xl font-semibold text-white">
                   {formatCurrency(totals.total)}
                 </p>
+                <p className="mt-2 text-sm text-slate-400">
+                  {formatCurrency(totals.perUnit)} / единицу при количестве{' '}
+                  {totals.quantity} шт.
+                </p>
               </div>
               <div className="mt-6 grid gap-4 text-sm">
                 <div className="flex items-center justify-between text-slate-300">
@@ -188,6 +207,12 @@ export default function App() {
                   <span>НДС</span>
                   <span className="font-medium text-white">
                     {formatCurrency(totals.vat)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-300">
+                  <span>Себестоимость на единицу</span>
+                  <span className="font-medium text-white">
+                    {formatCurrency(totals.perUnit)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-slate-300">
