@@ -10,7 +10,7 @@ const COPY = {
     countryTo: 'Country to',
     originPort: 'Origin port',
     destinationPort: 'Destination port',
-    countryHint: 'Enter any country manually (free text).',
+    countryHint: 'Choose from the arrow list or switch to manual country input.',
     autoSelect: 'Auto-select',
     quantity: 'Quantity',
     price: 'Price',
@@ -47,7 +47,7 @@ const COPY = {
     countryTo: 'Страна назначения',
     originPort: 'Порт отправления',
     destinationPort: 'Порт назначения',
-    countryHint: 'Введите любую страну вручную (свободный ввод).',
+    countryHint: 'Выберите страну стрелкой или переключитесь на ручной ввод.',
     autoSelect: 'Автовыбор',
     quantity: 'Количество',
     price: 'Цена',
@@ -84,7 +84,7 @@ const COPY = {
     countryTo: 'מדינת יעד',
     originPort: 'נמל יציאה',
     destinationPort: 'נמל יעד',
-    countryHint: 'אפשר להקליד כל מדינה באופן חופשי.',
+    countryHint: 'בחר מדינה מהחץ או עבור להזנה ידנית.',
     autoSelect: 'בחירה אוטומטית',
     quantity: 'כמות',
     price: 'מחיר',
@@ -118,12 +118,37 @@ const CURRENCIES = ['USD', 'EUR', 'ILS'];
 const INCOTERMS = ['EXW', 'FOB', 'CIF', 'DAP'];
 
 const getPorts = (country) => PORTS_BY_COUNTRY[country] || [];
+const CUSTOM_COUNTRY_VALUE = '__custom__';
+
+const isPresetCountry = (country) => COUNTRY_OPTIONS.includes(country);
 
 export default function ProductForm({ values, onChange, onReset, language }) {
   const t = COPY[language] || COPY.en;
   const originPorts = getPorts(values.countryFrom);
   const destinationPorts = getPorts(values.countryTo);
   const dir = language === 'he' ? 'rtl' : 'ltr';
+  const countryFromSelectValue = isPresetCountry(values.countryFrom)
+    ? values.countryFrom
+    : CUSTOM_COUNTRY_VALUE;
+  const countryToSelectValue = isPresetCountry(values.countryTo)
+    ? values.countryTo
+    : CUSTOM_COUNTRY_VALUE;
+
+  const handleCountrySelect = (field) => (event) => {
+    const nextValue = event.target.value;
+    if (nextValue === CUSTOM_COUNTRY_VALUE) {
+      if (isPresetCountry(values[field])) {
+        onChange({ target: { name: field, value: '' } });
+      }
+      return;
+    }
+
+    onChange({ target: { name: field, value: nextValue } });
+  };
+
+  const handleCountryCustomInput = (field) => (event) => {
+    onChange({ target: { name: field, value: event.target.value } });
+  };
 
   return (
     <section
@@ -159,26 +184,56 @@ export default function ProductForm({ values, onChange, onReset, language }) {
         <div className="grid gap-4 md:grid-cols-2">
           <label className="grid gap-2 text-sm text-slate-300">
             {t.countryFrom}
-            <input
-              type="text"
-              name="countryFrom"
-              value={values.countryFrom}
-              onChange={onChange}
-              placeholder="China / Brazil / UAE ..."
+            <select
+              name="countryFromSelect"
+              value={countryFromSelectValue}
+              onChange={handleCountrySelect('countryFrom')}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            />
+            >
+              {COUNTRY_OPTIONS.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+              <option value={CUSTOM_COUNTRY_VALUE}>Другая страна (ввести вручную)</option>
+            </select>
+            {countryFromSelectValue === CUSTOM_COUNTRY_VALUE ? (
+              <input
+                type="text"
+                name="countryFrom"
+                value={values.countryFrom}
+                onChange={handleCountryCustomInput('countryFrom')}
+                placeholder="China / Brazil / UAE ..."
+                className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+              />
+            ) : null}
           </label>
 
           <label className="grid gap-2 text-sm text-slate-300">
             {t.countryTo}
-            <input
-              type="text"
-              name="countryTo"
-              value={values.countryTo}
-              onChange={onChange}
-              placeholder="Canada / Germany / Japan ..."
+            <select
+              name="countryToSelect"
+              value={countryToSelectValue}
+              onChange={handleCountrySelect('countryTo')}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            />
+            >
+              {COUNTRY_OPTIONS.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+              <option value={CUSTOM_COUNTRY_VALUE}>Другая страна (ввести вручную)</option>
+            </select>
+            {countryToSelectValue === CUSTOM_COUNTRY_VALUE ? (
+              <input
+                type="text"
+                name="countryTo"
+                value={values.countryTo}
+                onChange={handleCountryCustomInput('countryTo')}
+                placeholder="Canada / Germany / Japan ..."
+                className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+              />
+            ) : null}
           </label>
 
           <label className="grid gap-2 text-sm text-slate-300">
@@ -206,35 +261,6 @@ export default function ProductForm({ values, onChange, onReset, language }) {
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
             />
           </label>
-        </div>
-
-        <div className="grid gap-2 text-xs text-slate-400 md:grid-cols-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-500">Быстрый выбор (откуда):</span>
-            {COUNTRY_OPTIONS.map((country) => (
-              <button
-                key={`from-${country}`}
-                type="button"
-                onClick={() => onChange({ target: { name: 'countryFrom', value: country } })}
-                className="rounded-full border border-slate-700 px-3 py-1 hover:border-brand-500 hover:text-white"
-              >
-                {country}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-500">Быстрый выбор (куда):</span>
-            {COUNTRY_OPTIONS.map((country) => (
-              <button
-                key={`to-${country}`}
-                type="button"
-                onClick={() => onChange({ target: { name: 'countryTo', value: country } })}
-                className="rounded-full border border-slate-700 px-3 py-1 hover:border-brand-500 hover:text-white"
-              >
-                {country}
-              </button>
-            ))}
-          </div>
         </div>
 
         <datalist id="origin-ports">
