@@ -10,7 +10,7 @@ const COPY = {
     countryTo: 'Country to',
     originPort: 'Origin port',
     destinationPort: 'Destination port',
-    countryHint: 'Type any country (not limited to the list).',
+    countryHint: 'Enter any country manually (free text).',
     autoSelect: 'Auto-select',
     quantity: 'Quantity',
     price: 'Price',
@@ -47,7 +47,7 @@ const COPY = {
     countryTo: 'Страна назначения',
     originPort: 'Порт отправления',
     destinationPort: 'Порт назначения',
-    countryHint: 'Введите любую страну (список не ограничен).',
+    countryHint: 'Введите любую страну вручную (свободный ввод).',
     autoSelect: 'Автовыбор',
     quantity: 'Количество',
     price: 'Цена',
@@ -84,7 +84,7 @@ const COPY = {
     countryTo: 'מדינת יעד',
     originPort: 'נמל יציאה',
     destinationPort: 'נמל יעד',
-    countryHint: 'ניתן להקליד כל מדינה.',
+    countryHint: 'אפשר להקליד כל מדינה באופן חופשי.',
     autoSelect: 'בחירה אוטומטית',
     quantity: 'כמות',
     price: 'מחיר',
@@ -161,10 +161,10 @@ export default function ProductForm({ values, onChange, onReset, language }) {
             {t.countryFrom}
             <input
               type="text"
-              list="country-options"
               name="countryFrom"
               value={values.countryFrom}
               onChange={onChange}
+              placeholder="China / Brazil / UAE ..."
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
             />
           </label>
@@ -173,10 +173,10 @@ export default function ProductForm({ values, onChange, onReset, language }) {
             {t.countryTo}
             <input
               type="text"
-              list="country-options"
               name="countryTo"
               value={values.countryTo}
               onChange={onChange}
+              placeholder="Canada / Germany / Japan ..."
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
             />
           </label>
@@ -208,11 +208,35 @@ export default function ProductForm({ values, onChange, onReset, language }) {
           </label>
         </div>
 
-        <datalist id="country-options">
-          {COUNTRY_OPTIONS.map((country) => (
-            <option key={country} value={country} />
-          ))}
-        </datalist>
+        <div className="grid gap-2 text-xs text-slate-400 md:grid-cols-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-slate-500">Быстрый выбор (откуда):</span>
+            {COUNTRY_OPTIONS.map((country) => (
+              <button
+                key={`from-${country}`}
+                type="button"
+                onClick={() => onChange({ target: { name: 'countryFrom', value: country } })}
+                className="rounded-full border border-slate-700 px-3 py-1 hover:border-brand-500 hover:text-white"
+              >
+                {country}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-slate-500">Быстрый выбор (куда):</span>
+            {COUNTRY_OPTIONS.map((country) => (
+              <button
+                key={`to-${country}`}
+                type="button"
+                onClick={() => onChange({ target: { name: 'countryTo', value: country } })}
+                className="rounded-full border border-slate-700 px-3 py-1 hover:border-brand-500 hover:text-white"
+              >
+                {country}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <datalist id="origin-ports">
           {originPorts.map((port) => (
             <option key={port} value={port} />
