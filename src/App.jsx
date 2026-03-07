@@ -74,6 +74,8 @@ export default function App() {
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
         <Header />
 
+        <HsSection />
+
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6">
             <ProductForm
@@ -83,7 +85,6 @@ export default function App() {
             />
             <ShippingSection values={values} onChange={handleChange} />
             <CustomsPanel values={values} onChange={handleChange} />
-            <HsSection />
           </div>
 
           <ResultsPanel totals={totals} />
