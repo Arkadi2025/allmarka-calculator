@@ -1,61 +1,369 @@
-const productFields = [
-  {
-    label: 'Стоимость товара',
-    name: 'price',
-    hint: 'Инвойсная цена товара.',
-    unit: 'USD'
-  },
-  {
-    label: 'Количество единиц',
-    name: 'quantity',
-    hint: 'Нужно для расчёта себестоимости на единицу.',
-    unit: 'PCS'
-  }
-];
+import { COUNTRY_OPTIONS, PORTS_BY_COUNTRY } from '../data/importData.js';
 
-export default function ProductForm({ values, onChange, onReset }) {
+const COPY = {
+  en: {
+    title: 'Shipment setup',
+    subtitle: 'Configure product and route details.',
+    reset: 'Reset',
+    productName: 'Product name',
+    countryFrom: 'Country from',
+    countryTo: 'Country to',
+    originPort: 'Origin port',
+    destinationPort: 'Destination port',
+    autoSelect: 'Auto-select',
+    quantity: 'Quantity',
+    price: 'Price',
+    currency: 'Currency',
+    incoterm: 'Incoterm',
+    dimensions: 'Dimensions & Weight',
+    cbm: 'CBM',
+    packageSize: 'Package Size',
+    container: 'Container',
+    volume: 'Volume (m3)',
+    weight: 'Weight (kg)',
+    hsCode: 'HS Code',
+    findIt: 'Find it',
+    iKnowIt: 'I know it',
+    manualHs: 'Enter HS code manually',
+    shipping: 'Shipping',
+    calculate: 'Calculate',
+    knowCost: 'I know cost',
+    shippingCost: 'Shipping cost'
+  },
+  ru: {
+    title: 'Параметры поставки',
+    subtitle: 'Настройте товар и маршрут.',
+    reset: 'Сбросить',
+    productName: 'Название товара',
+    countryFrom: 'Страна отправления',
+    countryTo: 'Страна назначения',
+    originPort: 'Порт отправления',
+    destinationPort: 'Порт назначения',
+    autoSelect: 'Автовыбор',
+    quantity: 'Количество',
+    price: 'Цена',
+    currency: 'Валюта',
+    incoterm: 'Инкотермс',
+    dimensions: 'Габариты и вес',
+    cbm: 'CBM',
+    packageSize: 'Размер упаковки',
+    container: 'Контейнер',
+    volume: 'Объём (м3)',
+    weight: 'Вес (кг)',
+    hsCode: 'HS код',
+    findIt: 'Найти',
+    iKnowIt: 'Я знаю код',
+    manualHs: 'Введите HS код вручную',
+    shipping: 'Доставка',
+    calculate: 'Рассчитать',
+    knowCost: 'Я знаю стоимость',
+    shippingCost: 'Стоимость доставки'
+  },
+  he: {
+    title: 'הגדרות משלוח',
+    subtitle: 'הגדר פרטי מוצר ונתיב.',
+    reset: 'איפוס',
+    productName: 'שם מוצר',
+    countryFrom: 'מדינת מקור',
+    countryTo: 'מדינת יעד',
+    originPort: 'נמל יציאה',
+    destinationPort: 'נמל יעד',
+    autoSelect: 'בחירה אוטומטית',
+    quantity: 'כמות',
+    price: 'מחיר',
+    currency: 'מטבע',
+    incoterm: 'Incoterm',
+    dimensions: 'נפח ומשקל',
+    cbm: 'CBM',
+    packageSize: 'גודל אריזה',
+    container: 'מכולה',
+    volume: 'נפח (מ"ק)',
+    weight: 'משקל (ק"ג)',
+    hsCode: 'קוד HS',
+    findIt: 'מצא',
+    iKnowIt: 'אני יודע',
+    manualHs: 'הזן קוד HS ידנית',
+    shipping: 'משלוח',
+    calculate: 'חשב',
+    knowCost: 'אני יודע עלות',
+    shippingCost: 'עלות משלוח'
+  }
+};
+
+const CURRENCIES = ['USD', 'EUR', 'ILS'];
+const INCOTERMS = ['EXW', 'FOB', 'CIF', 'DAP'];
+
+const getPorts = (country) => PORTS_BY_COUNTRY[country] || [];
+
+export default function ProductForm({ values, onChange, onReset, language }) {
+  const t = COPY[language] || COPY.en;
+  const originPorts = getPorts(values.countryFrom);
+  const destinationPorts = getPorts(values.countryTo);
+  const dir = language === 'he' ? 'rtl' : 'ltr';
+
   return (
-    <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg shadow-black/20 md:p-8">
+    <section
+      dir={dir}
+      className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg shadow-black/20 md:p-8"
+    >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Входные данные</h2>
-          <p className="text-sm text-slate-400">Все значения в долларах США.</p>
+          <h2 className="text-xl font-semibold">{t.title}</h2>
+          <p className="text-sm text-slate-400">{t.subtitle}</p>
         </div>
         <button
           type="button"
           onClick={onReset}
           className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-brand-500 hover:text-white"
         >
-          Сбросить
+          {t.reset}
         </button>
       </div>
 
-      <div className="mt-6 grid gap-5">
-        {productFields.map((field) => (
-          <label
-            key={field.name}
-            className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-4"
-          >
-            <span className="text-sm font-medium text-slate-200">
-              {field.label}
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">
-                {field.unit}
-              </span>
-              <input
-                type="number"
-                name={field.name}
-                value={values[field.name]}
-                onChange={onChange}
-                min="0"
-                step="0.01"
-                className="w-full bg-transparent text-lg font-semibold text-white outline-none placeholder:text-slate-600"
-              />
-            </div>
-            <span className="text-xs text-slate-500">{field.hint}</span>
+      <div className="mt-6 grid gap-4">
+        <input
+          type="text"
+          name="productName"
+          value={values.productName}
+          onChange={onChange}
+          placeholder={t.productName}
+          className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+        />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.countryFrom}
+            <select
+              name="countryFrom"
+              value={values.countryFrom}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {COUNTRY_OPTIONS.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
           </label>
-        ))}
+
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.countryTo}
+            <select
+              name="countryTo"
+              value={values.countryTo}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {COUNTRY_OPTIONS.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.originPort}
+            <select
+              name="originPort"
+              value={values.originPort}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              <option value="">{t.autoSelect}</option>
+              {originPorts.map((port) => (
+                <option key={port} value={port}>
+                  {port}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.destinationPort}
+            <select
+              name="destinationPort"
+              value={values.destinationPort}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              <option value="">{t.autoSelect}</option>
+              {destinationPorts.map((port) => (
+                <option key={port} value={port}>
+                  {port}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-4">
+          <input
+            type="number"
+            name="quantity"
+            value={values.quantity}
+            onChange={onChange}
+            min="0"
+            step="1"
+            placeholder={t.quantity}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          />
+          <input
+            type="number"
+            name="price"
+            value={values.price}
+            onChange={onChange}
+            min="0"
+            step="0.01"
+            placeholder={t.price}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          />
+          <select
+            name="currency"
+            value={values.currency}
+            onChange={onChange}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          >
+            {CURRENCIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+          <select
+            name="incoterm"
+            value={values.incoterm}
+            onChange={onChange}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          >
+            {INCOTERMS.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 p-4">
+          <p className="text-sm font-medium text-slate-200">{t.dimensions}</p>
+          <div className="mt-3 flex flex-wrap gap-6 text-sm text-slate-300">
+            {['cbm', 'package', 'container'].map((mode) => (
+              <label key={mode} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="dimensionMode"
+                  value={mode}
+                  checked={values.dimensionMode === mode}
+                  onChange={onChange}
+                />
+                <span>
+                  {mode === 'cbm'
+                    ? t.cbm
+                    : mode === 'package'
+                      ? t.packageSize
+                      : t.container}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <input
+              type="number"
+              name="volume"
+              value={values.volume}
+              onChange={onChange}
+              min="0"
+              step="0.01"
+              placeholder={t.volume}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+            <input
+              type="number"
+              name="weight"
+              value={values.weight}
+              onChange={onChange}
+              min="0"
+              step="0.01"
+              placeholder={t.weight}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 p-4">
+          <p className="text-sm font-medium text-slate-200">{t.hsCode}</p>
+          <div className="mt-3 flex gap-6 text-sm text-slate-300">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="hsMode"
+                value="find"
+                checked={values.hsMode === 'find'}
+                onChange={onChange}
+              />
+              {t.findIt}
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="hsMode"
+                value="manual"
+                checked={values.hsMode === 'manual'}
+                onChange={onChange}
+              />
+              {t.iKnowIt}
+            </label>
+          </div>
+          {values.hsMode === 'manual' ? (
+            <input
+              type="text"
+              name="manualHsCode"
+              value={values.manualHsCode}
+              onChange={onChange}
+              placeholder={t.manualHs}
+              className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          ) : null}
+        </div>
+
+        <div className="rounded-xl border border-slate-800 p-4">
+          <p className="text-sm font-medium text-slate-200">{t.shipping}</p>
+          <div className="mt-3 flex gap-6 text-sm text-slate-300">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="shippingMode"
+                value="calculate"
+                checked={values.shippingMode === 'calculate'}
+                onChange={onChange}
+              />
+              {t.calculate}
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="shippingMode"
+                value="manual"
+                checked={values.shippingMode === 'manual'}
+                onChange={onChange}
+              />
+              {t.knowCost}
+            </label>
+          </div>
+          {values.shippingMode === 'manual' ? (
+            <input
+              type="number"
+              name="shipping"
+              value={values.shipping}
+              onChange={onChange}
+              min="0"
+              step="0.01"
+              placeholder={t.shippingCost}
+              className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          ) : null}
+        </div>
       </div>
     </section>
   );

@@ -1,31 +1,56 @@
-export const COUNTRIES = ['Китай', 'Турция', 'Индия', 'ОАЭ', 'Европа'];
-export const PORTS = ['Шанхай', 'Нингбо', 'Стамбул', 'Джебель-Али'];
+export const COUNTRY_OPTIONS = [
+  'China',
+  'Turkey',
+  'India',
+  'UAE',
+  'Israel',
+  'Canada',
+  'USA',
+  'Germany'
+];
+
+export const PORTS_BY_COUNTRY = {
+  China: ['Shanghai', 'Ningbo', 'Shenzhen'],
+  Turkey: ['Istanbul', 'Mersin', 'Izmir'],
+  India: ['Nhava Sheva', 'Chennai', 'Mundra'],
+  UAE: ['Jebel Ali', 'Abu Dhabi', 'Sharjah'],
+  Israel: ['Haifa', 'Ashdod', 'Eilat'],
+  Canada: ['Vancouver', 'Montreal', 'Halifax'],
+  USA: ['Los Angeles', 'New York', 'Houston'],
+  Germany: ['Hamburg', 'Bremerhaven', 'Wilhelmshaven']
+};
+
+export const COUNTRIES = COUNTRY_OPTIONS;
+export const PORTS = ['Shanghai', 'Ningbo', 'Istanbul', 'Jebel Ali', 'Haifa', 'Vancouver'];
+
 export const HS_CHAPTERS = [
-  '85 — Электрооборудование',
-  '87 — Транспортные средства',
-  '90 — Оптика и измерительные приборы',
-  '61 — Одежда трикотажная'
+  '84 — Machinery',
+  '85 — Electronics',
+  '87 — Vehicles',
+  '90 — Optical and medical instruments',
+  '61 — Knitted apparel',
+  '62 — Woven apparel'
 ];
 
 export const HS_CHAPTERS_FALLBACK = [
-  '84 — Механические устройства',
-  '62 — Одежда текстильная',
-  '39 — Пластмассы и изделия из них',
-  '73 — Изделия из чугуна или стали'
+  '39 — Plastics',
+  '73 — Iron and steel articles',
+  '94 — Furniture',
+  '95 — Toys and games'
 ];
 
 export const HS_DATABASES = [
   {
-    name: 'Официальная база (Israel)',
+    name: 'Israel Customs',
     url: 'https://shaarolami-query.customs.mof.gov.il/'
   },
   {
-    name: 'World Customs Organization',
-    url: 'https://www.wcoomd.org/en/topics/nomenclature/hs-nomenclature/hs-nomenclature-2022-edition.aspx'
+    name: 'EU TARIC',
+    url: 'https://ec.europa.eu/taxation_customs/dds2/taric/taric_consultation.jsp?Lang=en'
   },
   {
-    name: 'European TARIC',
-    url: 'https://ec.europa.eu/taxation_customs/dds2/taric/taric_consultation.jsp?Lang=en'
+    name: 'WCO HS',
+    url: 'https://www.wcoomd.org/en/topics/nomenclature/overview/what-is-the-harmonized-system.aspx'
   }
 ];
 

@@ -6,13 +6,26 @@ import HsSection from './components/HsSection.jsx';
 import ProductForm from './components/ProductForm.jsx';
 import ResultsPanel from './components/ResultsPanel.jsx';
 import ShippingSection from './components/ShippingSection.jsx';
-import { CUSTOMS, DUTY, VAT } from './data/importData.js';
+import { COUNTRY_OPTIONS, CUSTOMS, DUTY, VAT } from './data/importData.js';
 
 const DEFAULTS = {
+  productName: '',
+  countryFrom: COUNTRY_OPTIONS[0],
+  countryTo: COUNTRY_OPTIONS[5],
+  originPort: '',
+  destinationPort: '',
+  quantity: 120,
   price: 2500,
+  currency: 'USD',
+  incoterm: 'EXW',
+  dimensionMode: 'cbm',
+  volume: '',
+  weight: '',
+  hsMode: 'find',
+  manualHsCode: '',
+  shippingMode: 'calculate',
   shipping: 320,
   insurance: 60,
-  quantity: 120,
   dutyRate: DUTY.standardRate,
   vatRate: VAT.standardRate,
   brokerage: CUSTOMS.brokerageDefault
@@ -29,6 +42,7 @@ const toNumber = (value) => {
 };
 
 export default function App() {
+  const [language, setLanguage] = useState('en');
   const [values, setValues] = useState(DEFAULTS);
 
   const totals = useMemo(() => {
@@ -72,9 +86,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
-        <Header />
-
-        <HsSection />
+        <Header language={language} onLanguageChange={setLanguage} />
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6">
@@ -82,7 +94,9 @@ export default function App() {
               values={values}
               onChange={handleChange}
               onReset={reset}
+              language={language}
             />
+            <HsSection />
             <ShippingSection values={values} onChange={handleChange} />
             <CustomsPanel values={values} onChange={handleChange} />
           </div>
