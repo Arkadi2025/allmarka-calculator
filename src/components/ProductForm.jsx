@@ -30,6 +30,7 @@ const COPY = {
     calculate: 'Calculate',
     knowCost: 'I know cost',
     shippingCost: 'Shipping cost',
+    hsCollected: 'Collected HS details',
     qtyShort: 'Qty',
     priceShort: 'Price',
     currencyShort: 'Currency',
@@ -65,6 +66,7 @@ const COPY = {
     calculate: 'Рассчитать',
     knowCost: 'Я знаю стоимость',
     shippingCost: 'Стоимость доставки',
+    hsCollected: 'Собранные данные ТН ВЭД',
     qtyShort: 'Кол-во',
     priceShort: 'Цена',
     currencyShort: 'Валюта',
@@ -100,6 +102,7 @@ const COPY = {
     calculate: 'חשב',
     knowCost: 'אני יודע עלות',
     shippingCost: 'עלות משלוח',
+    hsCollected: 'פרטי HS שנאספו',
     qtyShort: 'כמות',
     priceShort: 'מחיר',
     currencyShort: 'מטבע',
@@ -367,6 +370,16 @@ export default function ProductForm({ values, onChange, onReset, language }) {
               placeholder={t.manualHs}
               className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
             />
+          ) : null}
+
+          {values.hsFoundTitle || values.hsComplianceNote ? (
+            <div className="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3 text-xs text-slate-300">
+              <p className="font-semibold text-white">{t.hsCollected}</p>
+              {values.manualHsCode ? <p className="mt-1">HS: {values.manualHsCode}</p> : null}
+              {values.hsFoundTitle ? <p>{values.hsFoundTitle}</p> : null}
+              {values.hsFoundSource ? <p className="text-slate-400">Source: {values.hsFoundSource}</p> : null}
+              {values.hsComplianceNote ? <p className="mt-1 text-slate-400">{values.hsComplianceNote}</p> : null}
+            </div>
           ) : null}
         </div>
 

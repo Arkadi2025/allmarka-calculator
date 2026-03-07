@@ -23,6 +23,9 @@ const DEFAULTS = {
   weight: '',
   hsMode: 'find',
   manualHsCode: '',
+  hsFoundTitle: '',
+  hsFoundSource: '',
+  hsComplianceNote: '',
   fxRateOverride: '',
   shippingMode: 'calculate',
   shipping: 320,
@@ -105,15 +108,27 @@ export default function App() {
               onReset={reset}
               language={language}
             />
-            <HsSection onApplyHsResult={(payload) => {
-              setValues((prev) => ({
-                ...prev,
-                hsMode: "manual",
-                manualHsCode: payload.code || prev.manualHsCode,
-                dutyRate: payload.dutyRate ?? prev.dutyRate,
-                vatRate: payload.vatRate ?? prev.vatRate
-              }));
-            }} />
+            <HsSection
+              productName={values.productName}
+              onProductNameChange={(value) =>
+                setValues((prev) => ({
+                  ...prev,
+                  productName: value
+                }))
+              }
+              onApplyHsResult={(payload) => {
+                setValues((prev) => ({
+                  ...prev,
+                  hsMode: 'manual',
+                  manualHsCode: payload.code || prev.manualHsCode,
+                  dutyRate: payload.dutyRate ?? prev.dutyRate,
+                  vatRate: payload.vatRate ?? prev.vatRate,
+                  hsFoundTitle: payload.title || '',
+                  hsFoundSource: payload.source || '',
+                  hsComplianceNote: payload.note || ''
+                }));
+              }}
+            />
             <ShippingSection values={values} onChange={handleChange} />
             <CustomsPanel values={values} onChange={handleChange} />
           </div>

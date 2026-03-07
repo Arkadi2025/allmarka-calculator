@@ -14,8 +14,7 @@ const getCountryTax = (map, country) => {
   return map[country] ?? map.Israel ?? null;
 };
 
-export default function HsSection({ onApplyHsResult }) {
-  const [productName, setProductName] = useState('');
+export default function HsSection({ productName, onProductNameChange, onApplyHsResult }) {
   const [manualCode, setManualCode] = useState('');
   const [country, setCountry] = useState('Israel');
   const [chapter, setChapter] = useState('');
@@ -59,7 +58,7 @@ export default function HsSection({ onApplyHsResult }) {
   };
 
   const setQuickProduct = (value) => {
-    setProductName(value);
+    onProductNameChange?.(value);
   };
 
   const dutyRate = getCountryTax(result?.compliance?.dutyByCountry, country);
@@ -83,7 +82,7 @@ export default function HsSection({ onApplyHsResult }) {
             <input
               type="text"
               value={productName}
-              onChange={(event) => setProductName(event.target.value)}
+              onChange={(event) => onProductNameChange?.(event.target.value)}
               placeholder="Например: смартфон, ноутбук, сауна"
               className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-white outline-none placeholder:text-slate-500"
             />
@@ -207,6 +206,9 @@ export default function HsSection({ onApplyHsResult }) {
                   onClick={() =>
                     onApplyHsResult?.({
                       code: result.code,
+                      title: result.title,
+                      source: searchSource,
+                      note: result.compliance?.notes || '',
                       dutyRate,
                       vatRate
                     })
