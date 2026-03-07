@@ -10,6 +10,7 @@ const COPY = {
     countryTo: 'Country to',
     originPort: 'Origin port',
     destinationPort: 'Destination port',
+    countryHint: 'Type any country (not limited to the list).',
     autoSelect: 'Auto-select',
     quantity: 'Quantity',
     price: 'Price',
@@ -46,6 +47,7 @@ const COPY = {
     countryTo: 'Страна назначения',
     originPort: 'Порт отправления',
     destinationPort: 'Порт назначения',
+    countryHint: 'Введите любую страну (список не ограничен).',
     autoSelect: 'Автовыбор',
     quantity: 'Количество',
     price: 'Цена',
@@ -82,6 +84,7 @@ const COPY = {
     countryTo: 'מדינת יעד',
     originPort: 'נמל יציאה',
     destinationPort: 'נמל יעד',
+    countryHint: 'ניתן להקליד כל מדינה.',
     autoSelect: 'בחירה אוטומטית',
     quantity: 'כמות',
     price: 'מחיר',
@@ -151,73 +154,75 @@ export default function ProductForm({ values, onChange, onReset, language }) {
           className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
         />
 
+        <p className="text-xs text-slate-500">{t.countryHint}</p>
+
         <div className="grid gap-4 md:grid-cols-2">
           <label className="grid gap-2 text-sm text-slate-300">
             {t.countryFrom}
-            <select
+            <input
+              type="text"
+              list="country-options"
               name="countryFrom"
               value={values.countryFrom}
               onChange={onChange}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            >
-              {COUNTRY_OPTIONS.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="grid gap-2 text-sm text-slate-300">
             {t.countryTo}
-            <select
+            <input
+              type="text"
+              list="country-options"
               name="countryTo"
               value={values.countryTo}
               onChange={onChange}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            >
-              {COUNTRY_OPTIONS.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="grid gap-2 text-sm text-slate-300">
             {t.originPort}
-            <select
+            <input
+              type="text"
+              list="origin-ports"
               name="originPort"
               value={values.originPort}
               onChange={onChange}
+              placeholder={t.autoSelect}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            >
-              <option value="">{t.autoSelect}</option>
-              {originPorts.map((port) => (
-                <option key={port} value={port}>
-                  {port}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="grid gap-2 text-sm text-slate-300">
             {t.destinationPort}
-            <select
+            <input
+              type="text"
+              list="destination-ports"
               name="destinationPort"
               value={values.destinationPort}
               onChange={onChange}
+              placeholder={t.autoSelect}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            >
-              <option value="">{t.autoSelect}</option>
-              {destinationPorts.map((port) => (
-                <option key={port} value={port}>
-                  {port}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         </div>
+
+        <datalist id="country-options">
+          {COUNTRY_OPTIONS.map((country) => (
+            <option key={country} value={country} />
+          ))}
+        </datalist>
+        <datalist id="origin-ports">
+          {originPorts.map((port) => (
+            <option key={port} value={port} />
+          ))}
+        </datalist>
+        <datalist id="destination-ports">
+          {destinationPorts.map((port) => (
+            <option key={port} value={port} />
+          ))}
+        </datalist>
 
         <div className="grid gap-4 md:grid-cols-5">
           <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
@@ -319,8 +324,8 @@ export default function ProductForm({ values, onChange, onReset, language }) {
               name="volume"
               value={values.volume}
               onChange={onChange}
-              min="0"
               step="0.01"
+              min="0"
               placeholder={t.volume}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
             />
@@ -329,96 +334,12 @@ export default function ProductForm({ values, onChange, onReset, language }) {
               name="weight"
               value={values.weight}
               onChange={onChange}
-              min="0"
               step="0.01"
+              min="0"
               placeholder={t.weight}
               className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
             />
           </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-800 p-4">
-          <p className="text-sm font-medium text-slate-200">{t.hsCode}</p>
-          <div className="mt-3 flex gap-6 text-sm text-slate-300">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="hsMode"
-                value="find"
-                checked={values.hsMode === 'find'}
-                onChange={onChange}
-              />
-              {t.findIt}
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="hsMode"
-                value="manual"
-                checked={values.hsMode === 'manual'}
-                onChange={onChange}
-              />
-              {t.iKnowIt}
-            </label>
-          </div>
-          {values.hsMode === 'manual' ? (
-            <input
-              type="text"
-              name="manualHsCode"
-              value={values.manualHsCode}
-              onChange={onChange}
-              placeholder={t.manualHs}
-              className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            />
-          ) : null}
-
-          {values.hsFoundTitle || values.hsComplianceNote ? (
-            <div className="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3 text-xs text-slate-300">
-              <p className="font-semibold text-white">{t.hsCollected}</p>
-              {values.manualHsCode ? <p className="mt-1">HS: {values.manualHsCode}</p> : null}
-              {values.hsFoundTitle ? <p>{values.hsFoundTitle}</p> : null}
-              {values.hsFoundSource ? <p className="text-slate-400">Source: {values.hsFoundSource}</p> : null}
-              {values.hsComplianceNote ? <p className="mt-1 text-slate-400">{values.hsComplianceNote}</p> : null}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="rounded-xl border border-slate-800 p-4">
-          <p className="text-sm font-medium text-slate-200">{t.shipping}</p>
-          <div className="mt-3 flex gap-6 text-sm text-slate-300">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="shippingMode"
-                value="calculate"
-                checked={values.shippingMode === 'calculate'}
-                onChange={onChange}
-              />
-              {t.calculate}
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="shippingMode"
-                value="manual"
-                checked={values.shippingMode === 'manual'}
-                onChange={onChange}
-              />
-              {t.knowCost}
-            </label>
-          </div>
-          {values.shippingMode === 'manual' ? (
-            <input
-              type="number"
-              name="shipping"
-              value={values.shipping}
-              onChange={onChange}
-              min="0"
-              step="0.01"
-              placeholder={t.shippingCost}
-              className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-            />
-          ) : null}
         </div>
       </div>
     </section>

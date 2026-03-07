@@ -6,7 +6,7 @@ import HsSection from './components/HsSection.jsx';
 import ProductForm from './components/ProductForm.jsx';
 import ResultsPanel from './components/ResultsPanel.jsx';
 import ShippingSection from './components/ShippingSection.jsx';
-import { COUNTRY_OPTIONS, CUSTOMS, DESTINATION_FX, DUTY, VAT } from './data/importData.js';
+import { COUNTRY_IMPORT_PROFILES, COUNTRY_OPTIONS, CUSTOMS, DESTINATION_FX, DUTY, VAT } from './data/importData.js';
 
 const DEFAULTS = {
   productName: '',
@@ -33,6 +33,15 @@ const DEFAULTS = {
   dutyRate: DUTY.standardRate,
   vatRate: VAT.standardRate,
   brokerage: CUSTOMS.brokerageDefault
+};
+
+
+const countryProfileAliases = { us: 'usa', 'united states': 'usa', de: 'germany', il: 'israel', ae: 'uae' };
+
+const getCountryProfile = (country) => {
+  const normalized = String(country || '').toLowerCase().trim();
+  const key = countryProfileAliases[normalized] || normalized;
+  return COUNTRY_IMPORT_PROFILES[key] || COUNTRY_IMPORT_PROFILES.default;
 };
 
 const toNumber = (value) => {
@@ -65,7 +74,10 @@ export default function App() {
     const total = subtotal + duty + vat + brokerage;
     const safeQuantity = quantity > 0 ? quantity : 1;
     const perUnit = total / safeQuantity;
-    const destinationFx = DESTINATION_FX[values.countryTo] || DESTINATION_FX.USA;
+    const destinationFx = DESTINATION_FX[values.countryTo] || {
+      currency: getCountryProfile(values.countryTo).currency,
+      rate: getCountryProfile(values.countryTo).fxRate
+    };
     const manualFx = toNumber(values.fxRateOverride);
     const effectiveRate = manualFx > 0 ? manualFx : destinationFx.rate;
     const totalInDestinationCurrency = total * effectiveRate;
@@ -110,6 +122,7 @@ export default function App() {
             />
             <HsSection
               productName={values.productName}
+              destinationCountry={values.countryTo}
               onProductNameChange={(value) =>
                 setValues((prev) => ({
                   ...prev,

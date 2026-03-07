@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { COUNTRIES, HS_CHAPTERS, PORTS } from '../data/importData.js';
 import { HS_CATALOG } from '../data/hsCatalog.js';
 import { searchHsCode } from '../services/ai.js';
 
-const COUNTRY_OPTIONS = ['Israel', 'EU', 'Global', 'Canada', 'Germany'];
 const QUICK_PRODUCTS = HS_CATALOG.slice(0, 6).map((item) => item.keywords?.[0]).filter(Boolean);
 
 const getCountryTax = (map, country) => {
@@ -14,9 +13,15 @@ const getCountryTax = (map, country) => {
   return map[country] ?? map.Israel ?? null;
 };
 
-export default function HsSection({ productName, onProductNameChange, onApplyHsResult }) {
+export default function HsSection({ productName, destinationCountry, onProductNameChange, onApplyHsResult }) {
   const [manualCode, setManualCode] = useState('');
-  const [country, setCountry] = useState('Israel');
+  const [country, setCountry] = useState(destinationCountry || 'Israel');
+
+  useEffect(() => {
+    if (destinationCountry) {
+      setCountry(destinationCountry);
+    }
+  }, [destinationCountry]);
   const [chapter, setChapter] = useState('');
   const [result, setResult] = useState(null);
   const [alternatives, setAlternatives] = useState([]);
@@ -34,15 +39,20 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
       return 'Поиск...';
     }
     if (result) {
-      const sourceLabel = searchSource === 'primary-search' ? 'основной поисковик' : 'локальный каталог';
-      return `Найдено: ${result.code} — ${result.title} (точность ${Math.round(
+      const sourceLabel =
+        searchSource === 'ai-agent'
+          ? 'AI-агент'
+          : searchSource === 'primary-search'
+            ? 'основной поисковик'
+            : 'локальный каталог';
+      return `Найдено: ${result.code || 'N/A'} — ${result.title} (точность ${Math.round(
         result.confidence * 100
       )}%, источник: ${sourceLabel})`;
     }
     if (status === 'done') {
       return 'Совпадение не найдено. Проверьте название товара, страну, главу и откройте внешние базы ниже.';
     }
-    return 'Поиск работает по названию товара, коду, главе и ключевым словам.';
+    return 'Поиск работает по названию товара, коду, главе и ключевым словам. При VITE_AI_AGENT_URL включается AI-анализ для любых стран.';
   }, [result, searchSource, status]);
 
   const handleSearch = async (event) => {
@@ -54,6 +64,14 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
     setLinks(response.links);
     setLegalGuidance(response.legalGuidance || '');
     setSearchSource(response.searchSource || 'catalog-fallback');
+
+    if (response.countryProfile) {
+      onApplyHsResult?.({
+        dutyRate: response.countryProfile.dutyRate,
+        vatRate: response.countryProfile.vatRate,
+        note: response.countryProfile.notes || ''
+      });
+    }
     setStatus('done');
   };
 
@@ -66,10 +84,10 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
 
   return (
     <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 md:p-8">
-      <h3 className="text-lg font-semibold">Подсказки по ТН ВЭД</h3>
+      <h3 className="text-lg font-semibold">Подсказки по ТН ВЭД + AI анализ</h3>
       <p className="mt-2 text-sm text-slate-400">
-        Поиск по названию продукта с блоком требований к растаможке, документам и
-        ориентировочным ставкам для выбранной страны.
+        Поиск по названию продукта, ориентировочные ставки и требования по растаможке для любой
+        страны назначения.
       </p>
 
       <form
@@ -102,17 +120,13 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
         <div className="grid gap-3 md:grid-cols-3">
           <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
             Страна назначения
-            <select
+            <input
+              type="text"
+              list="hs-country-options"
               value={country}
               onChange={(event) => setCountry(event.target.value)}
               className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-slate-100 outline-none"
-            >
-              {COUNTRY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
@@ -134,12 +148,18 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full rounded-full border border-brand-500/50 px-4 py-2 text-sm text-white transition hover:border-brand-500"
+              className="w-full rounded-xl border border-brand-500/60 bg-brand-600/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600/30"
             >
-              Найти HS-код
+              Найти HS и рассчитать ставки
             </button>
           </div>
         </div>
+
+        <datalist id="hs-country-options">
+          {COUNTRIES.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
 
         <div className="flex flex-wrap gap-2">
           {QUICK_PRODUCTS.map((item) => (
@@ -160,7 +180,7 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
       {result ? (
         <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-900/10 p-4">
           <p className="text-sm font-semibold text-emerald-300">
-            HS {result.code} — {result.title}
+            HS {result.code || 'N/A'} — {result.title}
           </p>
           <p className="mt-2 text-sm text-slate-300">{result.explanation}</p>
 
@@ -169,7 +189,7 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
               <div>
                 <p className="font-semibold text-white">Требования к ввозу / растаможке</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {result.compliance.requirements?.map((item) => (
+                  {(result.compliance.requirements || []).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
@@ -178,7 +198,7 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
               <div>
                 <p className="font-semibold text-white">Документы</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {result.compliance.documents?.map((item) => (
+                  {(result.compliance.documents || []).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
@@ -187,7 +207,7 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
               <div>
                 <p className="font-semibold text-white">Нормативная база / ссылки</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {result.compliance.legalReferences?.map((item) => (
+                  {(result.compliance.legalReferences || []).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
@@ -234,9 +254,7 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
 
       {alternatives.length > 0 ? (
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Альтернативные варианты
-          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Альтернативные варианты</p>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
             {alternatives.map((item) => (
               <li key={item.code}>
@@ -249,9 +267,7 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
 
       {links.length > 0 ? (
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-300">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Внешние базы HS для {country}
-          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Внешние базы HS для {country}</p>
           <div className="mt-3 grid gap-2">
             {links.map((database) => (
               <a
@@ -272,15 +288,11 @@ export default function HsSection({ productName, onProductNameChange, onApplyHsR
       <div className="mt-4 grid gap-4 text-sm text-slate-400">
         <div className="grid gap-3 md:grid-cols-2">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Страны происхождения
-            </p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Страны (примеры)</p>
             <p className="mt-2 text-slate-300">{COUNTRIES.join(', ')}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Основные порты
-            </p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Основные порты</p>
             <p className="mt-2 text-slate-300">{PORTS.join(', ')}</p>
           </div>
         </div>

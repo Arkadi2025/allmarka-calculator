@@ -65,6 +65,74 @@ export const DESTINATION_FX = {
   Germany: { currency: 'EUR', rate: 0.92 }
 };
 
+export const COUNTRY_IMPORT_PROFILES = {
+  default: {
+    dutyRate: 7.5,
+    vatRate: 18,
+    brokerage: 75,
+    currency: 'USD',
+    fxRate: 1,
+    notes:
+      'Базовый профиль. Для финального оформления проверьте официальные классификаторы и локальные ставки в стране назначения.'
+  },
+  israel: {
+    dutyRate: 12,
+    vatRate: 17,
+    brokerage: 90,
+    currency: 'ILS',
+    fxRate: 3.65
+  },
+  usa: {
+    dutyRate: 4,
+    vatRate: 0,
+    brokerage: 120,
+    currency: 'USD',
+    fxRate: 1
+  },
+  germany: {
+    dutyRate: 5,
+    vatRate: 19,
+    brokerage: 95,
+    currency: 'EUR',
+    fxRate: 0.92
+  },
+  canada: {
+    dutyRate: 6,
+    vatRate: 5,
+    brokerage: 95,
+    currency: 'CAD',
+    fxRate: 1.36
+  },
+  china: {
+    dutyRate: 8,
+    vatRate: 13,
+    brokerage: 85,
+    currency: 'CNY',
+    fxRate: 7.2
+  },
+  india: {
+    dutyRate: 10,
+    vatRate: 18,
+    brokerage: 80,
+    currency: 'INR',
+    fxRate: 83.1
+  },
+  turkey: {
+    dutyRate: 8,
+    vatRate: 20,
+    brokerage: 85,
+    currency: 'TRY',
+    fxRate: 32.5
+  },
+  uae: {
+    dutyRate: 5,
+    vatRate: 5,
+    brokerage: 70,
+    currency: 'AED',
+    fxRate: 3.67
+  }
+};
+
 export const CUSTOMS_FALLBACK_GUIDE = {
   default:
     'Если HS-код не определён, подготовьте техописание, состав/материал, фото, назначение товара и передайте брокеру для предварительной классификации до отгрузки.',

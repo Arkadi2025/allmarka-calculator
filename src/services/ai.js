@@ -1,9 +1,12 @@
 import { COUNTRY_DB_LINKS, HS_CATALOG } from '../data/hsCatalog.js';
-import { CUSTOMS_FALLBACK_GUIDE } from '../data/importData.js';
+import { COUNTRY_IMPORT_PROFILES, CUSTOMS_FALLBACK_GUIDE } from '../data/importData.js';
 
 const PRIMARY_SEARCH_URL =
   (import.meta.env && import.meta.env.VITE_PRIMARY_HS_SEARCH_URL) ||
   'https://api.duckduckgo.com/';
+
+const AI_AGENT_URL = (import.meta.env && import.meta.env.VITE_AI_AGENT_URL) || '';
+const AI_AGENT_KEY = (import.meta.env && import.meta.env.VITE_AI_AGENT_KEY) || '';
 
 const normalize = (value) =>
   String(value || '')
@@ -50,16 +53,37 @@ const scoreEntry = (entry, query) => {
   return score;
 };
 
+const countryAliases = {
+  us: 'usa',
+  unitedstates: 'usa',
+  'united states': 'usa',
+  de: 'germany',
+  il: 'israel',
+  ae: 'uae',
+  uae: 'uae',
+  ca: 'canada'
+};
+
+const canonicalCountry = (country) => {
+  const normalized = normalize(country);
+  return countryAliases[normalized] || normalized;
+};
+
+const getCountryProfile = (country) => {
+  const canonical = canonicalCountry(country);
+  return COUNTRY_IMPORT_PROFILES[canonical] || COUNTRY_IMPORT_PROFILES.default;
+};
+
 const getCountryLinks = (country) => {
-  const key = normalize(country);
+  const key = canonicalCountry(country);
   if (!key) {
     return [...COUNTRY_DB_LINKS.global];
   }
 
-  if (['israel', 'израиль', 'il'].includes(key)) {
+  if (['israel'].includes(key)) {
     return [...COUNTRY_DB_LINKS.israel, ...COUNTRY_DB_LINKS.global];
   }
-  if (['eu', 'евросоюз', 'european union', 'европа', 'germany', 'германия'].includes(key)) {
+  if (['eu', 'european union', 'europe', 'germany'].includes(key)) {
     return [...COUNTRY_DB_LINKS.eu, ...COUNTRY_DB_LINKS.global];
   }
 
@@ -122,6 +146,75 @@ const searchFromPrimaryEngine = async (query) => {
   }
 };
 
+const parseAgentResponse = (data, fallbackResult, destinationCountry) => {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const estimatedDutyRate = Number.parseFloat(data.estimatedDutyRate);
+  const estimatedVatRate = Number.parseFloat(data.estimatedVatRate);
+
+  return {
+    code: data.hsCode || fallbackResult?.code || '',
+    title: data.title || fallbackResult?.title || 'AI estimated classification',
+    explanation: data.reasoning || fallbackResult?.explanation || '',
+    source: 'ai-agent',
+    confidence: Number.isFinite(Number.parseFloat(data.confidence))
+      ? Math.min(0.99, Number.parseFloat(data.confidence))
+      : 0.55,
+    compliance: {
+      requirements: Array.isArray(data.requirements) ? data.requirements : [],
+      documents: Array.isArray(data.documents) ? data.documents : [],
+      legalReferences: Array.isArray(data.legalReferences) ? data.legalReferences : [],
+      dutyByCountry: {
+        [destinationCountry]: Number.isFinite(estimatedDutyRate)
+          ? Number(estimatedDutyRate.toFixed(2))
+          : null
+      },
+      vatByCountry: {
+        [destinationCountry]: Number.isFinite(estimatedVatRate)
+          ? Number(estimatedVatRate.toFixed(2))
+          : null
+      },
+      notes:
+        data.notes ||
+        'AI-оценка ориентировочная. Перед декларированием подтвердите HS-код у брокера или в таможенном органе.'
+    }
+  };
+};
+
+const requestAiAgent = async ({ query, country, fallbackResult }) => {
+  if (!AI_AGENT_URL) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(AI_AGENT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(AI_AGENT_KEY ? { Authorization: `Bearer ${AI_AGENT_KEY}` } : {})
+      },
+      body: JSON.stringify({
+        task: 'import_customs_estimation',
+        query,
+        destinationCountry: country,
+        fallbackHsCode: fallbackResult?.code || null,
+        fallbackTitle: fallbackResult?.title || null
+      })
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return parseAgentResponse(data, fallbackResult, country);
+  } catch {
+    return null;
+  }
+};
+
 export const searchHsCode = async ({ query, country }) => {
   const normalizedQuery = normalize(query);
   if (!normalizedQuery) {
@@ -132,7 +225,8 @@ export const searchHsCode = async ({ query, country }) => {
       alternatives: [],
       links: getCountryLinks(country),
       legalGuidance: getFallbackGuide(country),
-      searchSource: 'empty'
+      searchSource: 'empty',
+      countryProfile: getCountryProfile(country)
     };
   }
 
@@ -142,17 +236,21 @@ export const searchHsCode = async ({ query, country }) => {
   const ranked = rankedFromWeb.length > 0 ? rankedFromWeb : rankedLocal;
 
   const [best, ...rest] = ranked;
+  const fallbackResult = best
+    ? {
+        ...best.entry,
+        source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
+        confidence: Math.min(0.99, Number((best.score / 140).toFixed(2)))
+      }
+    : null;
+
+  const aiResult = await requestAiAgent({ query: normalizedQuery, country, fallbackResult });
+  const result = aiResult || fallbackResult;
 
   return {
     query,
     country,
-    result: best
-      ? {
-          ...best.entry,
-          source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
-          confidence: Math.min(0.99, Number((best.score / 140).toFixed(2)))
-        }
-      : null,
+    result,
     alternatives: rest.slice(0, 3).map((item) => ({
       ...item.entry,
       source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
@@ -160,6 +258,11 @@ export const searchHsCode = async ({ query, country }) => {
     })),
     links: getCountryLinks(country),
     legalGuidance: getFallbackGuide(country),
-    searchSource: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog-fallback'
+    searchSource: aiResult
+      ? 'ai-agent'
+      : rankedFromWeb.length > 0
+        ? 'primary-search'
+        : 'catalog-fallback',
+    countryProfile: getCountryProfile(country)
   };
 };
