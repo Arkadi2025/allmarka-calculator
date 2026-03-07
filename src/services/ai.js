@@ -1,6 +1,10 @@
 import { COUNTRY_DB_LINKS, HS_CATALOG } from '../data/hsCatalog.js';
 import { CUSTOMS_FALLBACK_GUIDE } from '../data/importData.js';
 
+const PRIMARY_SEARCH_URL =
+  (import.meta.env && import.meta.env.VITE_PRIMARY_HS_SEARCH_URL) ||
+  'https://api.duckduckgo.com/';
+
 const normalize = (value) =>
   String(value || '')
     .toLowerCase()
@@ -70,6 +74,54 @@ const getFallbackGuide = (country) => {
   );
 };
 
+const rankCatalog = (query) => {
+  return HS_CATALOG
+    .map((entry) => ({
+      entry,
+      score: scoreEntry(entry, query)
+    }))
+    .filter((item) => item.score >= 40)
+    .sort((a, b) => b.score - a.score);
+};
+
+const searchFromPrimaryEngine = async (query) => {
+  try {
+    const url = `${PRIMARY_SEARCH_URL}?q=${encodeURIComponent(
+      `${query} HS code`
+    )}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const relatedText = Array.isArray(data.RelatedTopics)
+      ? data.RelatedTopics.flatMap((item) => {
+          if (item.Text) {
+            return [item.Text];
+          }
+          if (Array.isArray(item.Topics)) {
+            return item.Topics.map((topic) => topic.Text).filter(Boolean);
+          }
+          return [];
+        })
+      : [];
+
+    const sourceText = [data.AbstractText, data.Heading, ...relatedText]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (!sourceText) {
+      return null;
+    }
+
+    return sourceText;
+  } catch {
+    return null;
+  }
+};
+
 export const searchHsCode = async ({ query, country }) => {
   const normalizedQuery = normalize(query);
   if (!normalizedQuery) {
@@ -79,17 +131,15 @@ export const searchHsCode = async ({ query, country }) => {
       result: null,
       alternatives: [],
       links: getCountryLinks(country),
-      legalGuidance: getFallbackGuide(country)
+      legalGuidance: getFallbackGuide(country),
+      searchSource: 'empty'
     };
   }
 
-  const ranked = HS_CATALOG
-    .map((entry) => ({
-      entry,
-      score: scoreEntry(entry, normalizedQuery)
-    }))
-    .filter((item) => item.score >= 40)
-    .sort((a, b) => b.score - a.score);
+  const webSnippet = await searchFromPrimaryEngine(normalizedQuery);
+  const rankedFromWeb = webSnippet ? rankCatalog(`${normalizedQuery} ${webSnippet}`) : [];
+  const rankedLocal = rankCatalog(normalizedQuery);
+  const ranked = rankedFromWeb.length > 0 ? rankedFromWeb : rankedLocal;
 
   const [best, ...rest] = ranked;
 
@@ -99,16 +149,17 @@ export const searchHsCode = async ({ query, country }) => {
     result: best
       ? {
           ...best.entry,
-          source: 'catalog',
+          source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
           confidence: Math.min(0.99, Number((best.score / 140).toFixed(2)))
         }
       : null,
     alternatives: rest.slice(0, 3).map((item) => ({
       ...item.entry,
-      source: 'catalog',
+      source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
       confidence: Math.min(0.99, Number((item.score / 140).toFixed(2)))
     })),
     links: getCountryLinks(country),
-    legalGuidance: getFallbackGuide(country)
+    legalGuidance: getFallbackGuide(country),
+    searchSource: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog-fallback'
   };
 };

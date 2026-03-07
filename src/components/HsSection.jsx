@@ -24,6 +24,7 @@ export default function HsSection({ onApplyHsResult }) {
   const [links, setLinks] = useState([]);
   const [status, setStatus] = useState('idle');
   const [legalGuidance, setLegalGuidance] = useState('');
+  const [searchSource, setSearchSource] = useState('catalog-fallback');
 
   const searchQuery = useMemo(() => {
     return [productName, manualCode, chapter].filter(Boolean).join(' ');
@@ -34,15 +35,16 @@ export default function HsSection({ onApplyHsResult }) {
       return 'Поиск...';
     }
     if (result) {
+      const sourceLabel = searchSource === 'primary-search' ? 'основной поисковик' : 'локальный каталог';
       return `Найдено: ${result.code} — ${result.title} (точность ${Math.round(
         result.confidence * 100
-      )}%)`;
+      )}%, источник: ${sourceLabel})`;
     }
     if (status === 'done') {
       return 'Совпадение не найдено. Проверьте название товара, страну, главу и откройте внешние базы ниже.';
     }
     return 'Поиск работает по названию товара, коду, главе и ключевым словам.';
-  }, [result, status]);
+  }, [result, searchSource, status]);
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -52,6 +54,7 @@ export default function HsSection({ onApplyHsResult }) {
     setAlternatives(response.alternatives);
     setLinks(response.links);
     setLegalGuidance(response.legalGuidance || '');
+    setSearchSource(response.searchSource || 'catalog-fallback');
     setStatus('done');
   };
 
