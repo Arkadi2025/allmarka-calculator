@@ -15,7 +15,7 @@ export const HS_CATALOG = [
       documents: ['Инвойс', 'Упаковочный лист', 'Сертификаты соответствия', 'Описание товара'],
       legalReferences: ['WCO HS notes', 'Технические регламенты страны назначения'],
       dutyByCountry: { Israel: 0, Canada: 0, Germany: 0 },
-      vatByCountry: { Israel: 17, Canada: 5, Germany: 19 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
       notes: 'Фактическая ставка зависит от преференций, происхождения и действующих торговых мер.'
     }
   },
@@ -35,7 +35,7 @@ export const HS_CATALOG = [
       documents: ['Инвойс', 'Упаковочный лист', 'RF/EMC документы', 'Спецификация устройства'],
       legalReferences: ['WCO HS notes', 'Правила радиосвязи страны импорта'],
       dutyByCountry: { Israel: 0, Canada: 0, Germany: 0 },
-      vatByCountry: { Israel: 17, Canada: 5, Germany: 19 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
       notes: 'Отдельные сборы возможны для устройств связи и утилизации электроники.'
     }
   },
@@ -139,10 +139,10 @@ export const HS_CATALOG = [
         'Национальные требования электробезопасности страны импорта',
         'Таможенные правила классификации и подтверждения назначения товара'
       ],
-      dutyByCountry: { Israel: 12, Canada: 8, Germany: 5 },
-      vatByCountry: { Israel: 17, Canada: 5, Germany: 19 },
+      dutyByCountry: { Israel: 0, Canada: 8, Germany: 5 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
       notes:
-        'Ставки ориентировочные: финальная ставка зависит от подкатегории, происхождения товара, льготных соглашений и актуального тарифа на дату декларирования.'
+        'Для Israel в этом справочнике задана пошлина 0% и НДС 18%. Финальная ставка зависит от подкатегории, происхождения товара, льготных соглашений и актуального тарифа на дату декларирования.'
     }
   }
 ];

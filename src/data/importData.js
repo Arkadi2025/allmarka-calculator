@@ -77,7 +77,7 @@ export const CUSTOMS_FALLBACK_GUIDE = {
 };
 
 export const VAT = {
-  standardRate: 12
+  standardRate: 18
 };
 
 export const DUTY = {
