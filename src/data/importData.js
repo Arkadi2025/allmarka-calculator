@@ -54,6 +54,28 @@ export const HS_DATABASES = [
   }
 ];
 
+export const DESTINATION_FX = {
+  China: { currency: 'CNY', rate: 7.2 },
+  Turkey: { currency: 'TRY', rate: 32.5 },
+  India: { currency: 'INR', rate: 83.1 },
+  UAE: { currency: 'AED', rate: 3.67 },
+  Israel: { currency: 'ILS', rate: 3.65 },
+  Canada: { currency: 'CAD', rate: 1.36 },
+  USA: { currency: 'USD', rate: 1 },
+  Germany: { currency: 'EUR', rate: 0.92 }
+};
+
+export const CUSTOMS_FALLBACK_GUIDE = {
+  default:
+    'If HS code cannot be determined, submit technical specs, product composition, photos, and intended use to a licensed customs broker for pre-classification before shipment.',
+  Israel:
+    'For Israel, request a preliminary classification opinion (if available) via customs/broker channels and keep product datasheets, invoice, COO, and usage description ready for clearance review.',
+  Canada:
+    'For Canada, consult CBSA tariff classification resources and keep a full product brief, materials, and manufacturer declaration for broker pre-ruling support.',
+  Germany:
+    'For Germany/EU, use TARIC guidance and prepare product composition + intended use details for an EU customs advisor to obtain a binding tariff information route when needed.'
+};
+
 export const VAT = {
   standardRate: 12
 };

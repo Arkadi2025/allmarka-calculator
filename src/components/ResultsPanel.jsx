@@ -1,7 +1,7 @@
-const formatCurrency = (value) =>
+const formatCurrency = (value, currency = 'USD') =>
   new Intl.NumberFormat('ru-RU', {
     style: 'currency',
-    currency: 'USD',
+    currency,
     minimumFractionDigits: 2
   }).format(value);
 
@@ -13,47 +13,39 @@ export default function ResultsPanel({ totals }) {
         Суммарные расходы с учётом всех налогов и сборов.
       </p>
       <div className="mt-6 rounded-2xl border border-brand-500/30 bg-slate-950/70 p-5">
-        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">
-          Total
-        </p>
-        <p className="mt-3 text-3xl font-semibold text-white">
-          {formatCurrency(totals.total)}
-        </p>
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Total</p>
+        <p className="mt-3 text-3xl font-semibold text-white">{formatCurrency(totals.total)}</p>
         <p className="mt-2 text-sm text-slate-400">
-          {formatCurrency(totals.perUnit)} / единицу при количестве{' '}
-          {totals.quantity} шт.
+          {formatCurrency(totals.perUnit)} / единицу при количестве {totals.quantity} шт.
         </p>
+        <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-300">
+          <p className="font-medium text-white">В валюте страны назначения ({totals.destinationCountry})</p>
+          <p className="mt-1 text-lg font-semibold text-brand-100">
+            {formatCurrency(totals.totalInDestinationCurrency, totals.destinationCurrency)}
+          </p>
+          <p className="text-xs text-slate-500">Курс: 1 USD = {totals.destinationRate} {totals.destinationCurrency}</p>
+        </div>
       </div>
       <div className="mt-6 grid gap-4 text-sm">
         <div className="flex items-center justify-between text-slate-300">
           <span>База (товар + доставка)</span>
-          <span className="font-medium text-white">
-            {formatCurrency(totals.subtotal)}
-          </span>
+          <span className="font-medium text-white">{formatCurrency(totals.subtotal)}</span>
         </div>
         <div className="flex items-center justify-between text-slate-300">
           <span>Пошлина</span>
-          <span className="font-medium text-white">
-            {formatCurrency(totals.duty)}
-          </span>
+          <span className="font-medium text-white">{formatCurrency(totals.duty)}</span>
         </div>
         <div className="flex items-center justify-between text-slate-300">
           <span>НДС</span>
-          <span className="font-medium text-white">
-            {formatCurrency(totals.vat)}
-          </span>
+          <span className="font-medium text-white">{formatCurrency(totals.vat)}</span>
         </div>
         <div className="flex items-center justify-between text-slate-300">
           <span>Себестоимость на единицу</span>
-          <span className="font-medium text-white">
-            {formatCurrency(totals.perUnit)}
-          </span>
+          <span className="font-medium text-white">{formatCurrency(totals.perUnit)}</span>
         </div>
         <div className="flex items-center justify-between text-slate-300">
           <span>Брокерские услуги</span>
-          <span className="font-medium text-white">
-            {formatCurrency(totals.brokerage)}
-          </span>
+          <span className="font-medium text-white">{formatCurrency(totals.brokerage)}</span>
         </div>
       </div>
     </section>

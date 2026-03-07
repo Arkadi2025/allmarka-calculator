@@ -6,7 +6,7 @@ import HsSection from './components/HsSection.jsx';
 import ProductForm from './components/ProductForm.jsx';
 import ResultsPanel from './components/ResultsPanel.jsx';
 import ShippingSection from './components/ShippingSection.jsx';
-import { COUNTRY_OPTIONS, CUSTOMS, DUTY, VAT } from './data/importData.js';
+import { COUNTRY_OPTIONS, CUSTOMS, DESTINATION_FX, DUTY, VAT } from './data/importData.js';
 
 const DEFAULTS = {
   productName: '',
@@ -61,6 +61,8 @@ export default function App() {
     const total = subtotal + duty + vat + brokerage;
     const safeQuantity = quantity > 0 ? quantity : 1;
     const perUnit = total / safeQuantity;
+    const destinationFx = DESTINATION_FX[values.countryTo] || DESTINATION_FX.USA;
+    const totalInDestinationCurrency = total * destinationFx.rate;
 
     return {
       subtotal,
@@ -69,7 +71,11 @@ export default function App() {
       brokerage,
       total,
       perUnit,
-      quantity: safeQuantity
+      quantity: safeQuantity,
+      destinationCurrency: destinationFx.currency,
+      destinationRate: destinationFx.rate,
+      destinationCountry: values.countryTo,
+      totalInDestinationCurrency
     };
   }, [values]);
 

@@ -16,6 +16,7 @@ export default function HsSection() {
   const [alternatives, setAlternatives] = useState([]);
   const [links, setLinks] = useState([]);
   const [status, setStatus] = useState('idle');
+  const [legalGuidance, setLegalGuidance] = useState('');
 
   const searchQuery = useMemo(() => {
     return [productName, manualCode, chapter].filter(Boolean).join(' ');
@@ -43,6 +44,7 @@ export default function HsSection() {
     setResult(response.result);
     setAlternatives(response.alternatives);
     setLinks(response.links);
+    setLegalGuidance(response.legalGuidance || '');
     setStatus('done');
   };
 
@@ -149,6 +151,15 @@ export default function HsSection() {
             HS {result.code} — {result.title}
           </p>
           <p className="mt-2 text-sm text-slate-300">{result.explanation}</p>
+        </div>
+      ) : null}
+
+
+
+      {!result && status === 'done' && legalGuidance ? (
+        <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-900/10 p-4">
+          <p className="text-sm font-semibold text-amber-300">Юридическое пояснение при отсутствии HS-кода</p>
+          <p className="mt-2 text-sm text-slate-300">{legalGuidance}</p>
         </div>
       ) : null}
 

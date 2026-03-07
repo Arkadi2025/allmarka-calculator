@@ -1,4 +1,5 @@
 import { COUNTRY_DB_LINKS, HS_CATALOG } from '../data/hsCatalog.js';
+import { CUSTOMS_FALLBACK_GUIDE } from '../data/importData.js';
 
 const normalize = (value) =>
   String(value || '')
@@ -8,7 +9,12 @@ const normalize = (value) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const tokenize = (value) => normalize(value).split(' ').filter(Boolean);
+const STOPWORDS = new Set(['product', 'товар', 'item', 'goods', 'products']);
+
+const tokenize = (value) =>
+  normalize(value)
+    .split(' ')
+    .filter((token) => token && token.length > 2 && !STOPWORDS.has(token));
 
 const scoreEntry = (entry, query) => {
   const normalizedQuery = normalize(query);
@@ -23,7 +29,8 @@ const scoreEntry = (entry, query) => {
 
   let score = 0;
 
-  if (entry.code.startsWith(normalizedQuery.replace(/\D/g, ''))) {
+  const numericQuery = normalizedQuery.replace(/\D/g, '');
+  if (numericQuery && entry.code.startsWith(numericQuery)) {
     score += 120;
   }
   if (searchable.includes(normalizedQuery)) {
@@ -48,11 +55,19 @@ const getCountryLinks = (country) => {
   if (['israel', 'израиль', 'il'].includes(key)) {
     return [...COUNTRY_DB_LINKS.israel, ...COUNTRY_DB_LINKS.global];
   }
-  if (['eu', 'евросоюз', 'european union', 'европа'].includes(key)) {
+  if (['eu', 'евросоюз', 'european union', 'европа', 'germany', 'германия'].includes(key)) {
     return [...COUNTRY_DB_LINKS.eu, ...COUNTRY_DB_LINKS.global];
   }
 
   return [...COUNTRY_DB_LINKS.global];
+};
+
+const getFallbackGuide = (country) => {
+  return (
+    CUSTOMS_FALLBACK_GUIDE[country] ||
+    CUSTOMS_FALLBACK_GUIDE[normalize(country)] ||
+    CUSTOMS_FALLBACK_GUIDE.default
+  );
 };
 
 export const searchHsCode = async ({ query, country }) => {
@@ -63,7 +78,8 @@ export const searchHsCode = async ({ query, country }) => {
       country,
       result: null,
       alternatives: [],
-      links: getCountryLinks(country)
+      links: getCountryLinks(country),
+      legalGuidance: getFallbackGuide(country)
     };
   }
 
@@ -72,7 +88,7 @@ export const searchHsCode = async ({ query, country }) => {
       entry,
       score: scoreEntry(entry, normalizedQuery)
     }))
-    .filter((item) => item.score > 0)
+    .filter((item) => item.score >= 40)
     .sort((a, b) => b.score - a.score);
 
   const [best, ...rest] = ranked;
@@ -92,6 +108,7 @@ export const searchHsCode = async ({ query, country }) => {
       source: 'catalog',
       confidence: Math.min(0.99, Number((item.score / 140).toFixed(2)))
     })),
-    links: getCountryLinks(country)
+    links: getCountryLinks(country),
+    legalGuidance: getFallbackGuide(country)
   };
 };
