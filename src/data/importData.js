@@ -67,13 +67,13 @@ export const DESTINATION_FX = {
 
 export const CUSTOMS_FALLBACK_GUIDE = {
   default:
-    'If HS code cannot be determined, submit technical specs, product composition, photos, and intended use to a licensed customs broker for pre-classification before shipment.',
+    'Если HS-код не определён, подготовьте техописание, состав/материал, фото, назначение товара и передайте брокеру для предварительной классификации до отгрузки.',
   Israel:
-    'For Israel, request a preliminary classification opinion (if available) via customs/broker channels and keep product datasheets, invoice, COO, and usage description ready for clearance review.',
+    'Для Израиля запросите предварительное мнение по классификации (если доступно) через брокера/каналы таможни и держите готовыми: datasheet, инвойс, COO и описание назначения товара.',
   Canada:
-    'For Canada, consult CBSA tariff classification resources and keep a full product brief, materials, and manufacturer declaration for broker pre-ruling support.',
+    'Для Канады используйте материалы CBSA по tariff classification и подготовьте полный product brief, состав/материалы и декларацию производителя для поддержки pre-ruling.',
   Germany:
-    'For Germany/EU, use TARIC guidance and prepare product composition + intended use details for an EU customs advisor to obtain a binding tariff information route when needed.'
+    'Для Германии/ЕС используйте TARIC и подготовьте состав, назначение и техописание для консультанта по таможне (при необходимости — процедура BTI).'
 };
 
 export const VAT = {
