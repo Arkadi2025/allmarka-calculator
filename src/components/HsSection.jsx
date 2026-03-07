@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { COUNTRIES, HS_CHAPTERS, PORTS } from '../data/importData.js';
+import { COUNTRIES, HS_CHAPTERS, HS_DATABASES, PORTS } from '../data/importData.js';
 import { HS_CATALOG } from '../data/hsCatalog.js';
 import { searchHsCode } from '../services/ai.js';
 
@@ -13,6 +13,29 @@ const getCountryTax = (map, country) => {
   return map[country] ?? map.Israel ?? null;
 };
 
+const getSourceLabel = (searchSource) => {
+  if (searchSource === 'ai-agent') {
+    return 'AI-агент + локальный каталог';
+  }
+  if (searchSource === 'primary-search') {
+    return 'Поисковый источник + локальный каталог';
+  }
+  if (searchSource === 'catalog-fallback') {
+    return 'Локальный каталог приложения';
+  }
+  return 'Источник не определён';
+};
+
+const getSourceDisclaimer = (searchSource) => {
+  if (searchSource === 'ai-agent') {
+    return 'AI-ответ не является официальным классификационным решением. Для декларирования подтвердите код у брокера или в таможне.';
+  }
+  if (searchSource === 'primary-search') {
+    return 'Поисковая выдача используется только как вспомогательный сигнал. Юридически значимыми являются только официальные таможенные базы/решения.';
+  }
+  return 'Данные каталога являются справочными. Для подачи декларации требуется проверка по официальным источникам и/или предварительное решение таможни.';
+};
+
 export default function HsSection({ productName, destinationCountry, onProductNameChange, onApplyHsResult }) {
   const [manualCode, setManualCode] = useState('');
   const [country, setCountry] = useState(destinationCountry || 'Israel');
@@ -22,6 +45,7 @@ export default function HsSection({ productName, destinationCountry, onProductNa
       setCountry(destinationCountry);
     }
   }, [destinationCountry]);
+
   const [chapter, setChapter] = useState('');
   const [result, setResult] = useState(null);
   const [alternatives, setAlternatives] = useState([]);
@@ -33,6 +57,19 @@ export default function HsSection({ productName, destinationCountry, onProductNa
   const searchQuery = useMemo(() => {
     return [productName, manualCode, chapter].filter(Boolean).join(' ');
   }, [productName, manualCode, chapter]);
+
+  const officialSources = useMemo(() => {
+    const merged = [...links, ...HS_DATABASES];
+    const seen = new Set();
+    return merged.filter((item) => {
+      const key = item.url;
+      if (!key || seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }, [links]);
 
   const statusText = useMemo(() => {
     if (status === 'loading') {
@@ -187,6 +224,30 @@ export default function HsSection({ productName, destinationCountry, onProductNa
           {result.compliance ? (
             <div className="mt-4 space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
               <div>
+                <p className="font-semibold text-white">Источник данных и официальный статус</p>
+                <p className="mt-2">Текущий источник: {getSourceLabel(searchSource)}.</p>
+                <p className="mt-1 text-xs text-amber-300">{getSourceDisclaimer(searchSource)}</p>
+                <p className="mt-2 text-xs text-slate-400">
+                  Официальное закрепление: итоговый HS-код и ставки подтверждаются только по базам
+                  таможенных органов/предварительным решениям (ruling/BTI) страны назначения.
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                  {officialSources.map((item) => (
+                    <li key={item.url}>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-300 hover:text-brand-200"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
                 <p className="font-semibold text-white">Требования к ввозу / растаможке</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
                   {(result.compliance.requirements || []).map((item) => (
@@ -218,6 +279,11 @@ export default function HsSection({ productName, destinationCountry, onProductNa
                 <p className="mt-1">Пошлина: {dutyRate ?? 'N/A'}%</p>
                 <p>НДС/налог на импорт: {vatRate ?? 'N/A'}%</p>
                 <p className="mt-2 text-xs text-slate-400">{result.compliance.notes}</p>
+                <p className="mt-2 text-xs text-amber-300">
+                  Ставки выше — ориентир. Официально закрепляются через национальный тариф/базу
+                  таможни (например TARIC/CBSA/Israel Customs) и могут зависеть от подкатегории,
+                  происхождения, преференций и даты декларации.
+                </p>
               </div>
 
               {dutyRate != null || vatRate != null ? (
