@@ -25,6 +25,7 @@ const COPY = {
     findIt: 'Find it',
     iKnowIt: 'I know it',
     manualHs: 'Enter HS code manually',
+    fxRate: 'FX rate USD to destination currency',
     shipping: 'Shipping',
     calculate: 'Calculate',
     knowCost: 'I know cost',
@@ -54,6 +55,7 @@ const COPY = {
     findIt: 'Найти',
     iKnowIt: 'Я знаю код',
     manualHs: 'Введите HS код вручную',
+    fxRate: 'Курс USD к валюте назначения',
     shipping: 'Доставка',
     calculate: 'Рассчитать',
     knowCost: 'Я знаю стоимость',
@@ -83,6 +85,7 @@ const COPY = {
     findIt: 'מצא',
     iKnowIt: 'אני יודע',
     manualHs: 'הזן קוד HS ידנית',
+    fxRate: 'שער USD למטבע היעד',
     shipping: 'משלוח',
     calculate: 'חשב',
     knowCost: 'אני יודע עלות',
@@ -198,7 +201,7 @@ export default function ProductForm({ values, onChange, onReset, language }) {
           </label>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <input
             type="number"
             name="quantity"
@@ -231,6 +234,16 @@ export default function ProductForm({ values, onChange, onReset, language }) {
               </option>
             ))}
           </select>
+          <input
+            type="number"
+            name="fxRateOverride"
+            value={values.fxRateOverride}
+            onChange={onChange}
+            min="0"
+            step="0.0001"
+            placeholder={t.fxRate}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          />
           <select
             name="incoterm"
             value={values.incoterm}

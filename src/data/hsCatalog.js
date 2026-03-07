@@ -87,6 +87,14 @@ export const HS_CATALOG = [
     chapter: '95',
     keywords: ['игрушка', 'toy', 'puzzle', 'конструктор'],
     explanation: 'Игрушки для детей, включая наборы для сборки и моделирования.'
+  },
+  {
+    code: '851629',
+    title: 'Sauna heaters and other electric space-heating apparatus',
+    chapter: '85',
+    keywords: ['sauna', 'сауна', 'sauna heater', 'печь для сауны', 'heater'],
+    explanation:
+      'Electric heating apparatus for indoor heating applications, including sauna heater equipment depending on technical specs.'
   }
 ];
 

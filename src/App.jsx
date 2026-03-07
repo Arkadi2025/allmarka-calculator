@@ -23,6 +23,7 @@ const DEFAULTS = {
   weight: '',
   hsMode: 'find',
   manualHsCode: '',
+  fxRateOverride: '',
   shippingMode: 'calculate',
   shipping: 320,
   insurance: 60,
@@ -62,7 +63,9 @@ export default function App() {
     const safeQuantity = quantity > 0 ? quantity : 1;
     const perUnit = total / safeQuantity;
     const destinationFx = DESTINATION_FX[values.countryTo] || DESTINATION_FX.USA;
-    const totalInDestinationCurrency = total * destinationFx.rate;
+    const manualFx = toNumber(values.fxRateOverride);
+    const effectiveRate = manualFx > 0 ? manualFx : destinationFx.rate;
+    const totalInDestinationCurrency = total * effectiveRate;
 
     return {
       subtotal,
@@ -73,7 +76,7 @@ export default function App() {
       perUnit,
       quantity: safeQuantity,
       destinationCurrency: destinationFx.currency,
-      destinationRate: destinationFx.rate,
+      destinationRate: effectiveRate,
       destinationCountry: values.countryTo,
       totalInDestinationCurrency
     };
