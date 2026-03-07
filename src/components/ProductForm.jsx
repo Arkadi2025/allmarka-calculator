@@ -29,7 +29,12 @@ const COPY = {
     shipping: 'Shipping',
     calculate: 'Calculate',
     knowCost: 'I know cost',
-    shippingCost: 'Shipping cost'
+    shippingCost: 'Shipping cost',
+    qtyShort: 'Qty',
+    priceShort: 'Price',
+    currencyShort: 'Currency',
+    fxShort: 'FX',
+    incotermShort: 'Incoterm'
   },
   ru: {
     title: 'Параметры поставки',
@@ -59,7 +64,12 @@ const COPY = {
     shipping: 'Доставка',
     calculate: 'Рассчитать',
     knowCost: 'Я знаю стоимость',
-    shippingCost: 'Стоимость доставки'
+    shippingCost: 'Стоимость доставки',
+    qtyShort: 'Кол-во',
+    priceShort: 'Цена',
+    currencyShort: 'Валюта',
+    fxShort: 'Курс',
+    incotermShort: 'Инкотермс'
   },
   he: {
     title: 'הגדרות משלוח',
@@ -89,7 +99,12 @@ const COPY = {
     shipping: 'משלוח',
     calculate: 'חשב',
     knowCost: 'אני יודע עלות',
-    shippingCost: 'עלות משלוח'
+    shippingCost: 'עלות משלוח',
+    qtyShort: 'כמות',
+    priceShort: 'מחיר',
+    currencyShort: 'מטבע',
+    fxShort: 'שער',
+    incotermShort: 'Incoterm'
   }
 };
 
@@ -202,60 +217,75 @@ export default function ProductForm({ values, onChange, onReset, language }) {
         </div>
 
         <div className="grid gap-4 md:grid-cols-5">
-          <input
-            type="number"
-            name="quantity"
-            value={values.quantity}
-            onChange={onChange}
-            min="0"
-            step="1"
-            placeholder={t.quantity}
-            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-          />
-          <input
-            type="number"
-            name="price"
-            value={values.price}
-            onChange={onChange}
-            min="0"
-            step="0.01"
-            placeholder={t.price}
-            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-          />
-          <select
-            name="currency"
-            value={values.currency}
-            onChange={onChange}
-            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-          >
-            {CURRENCIES.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            name="fxRateOverride"
-            value={values.fxRateOverride}
-            onChange={onChange}
-            min="0"
-            step="0.0001"
-            placeholder={t.fxRate}
-            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-          />
-          <select
-            name="incoterm"
-            value={values.incoterm}
-            onChange={onChange}
-            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
-          >
-            {INCOTERMS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.qtyShort}
+            <input
+              type="number"
+              name="quantity"
+              value={values.quantity}
+              onChange={onChange}
+              min="0"
+              step="1"
+              placeholder={t.quantity}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.priceShort}
+            <input
+              type="number"
+              name="price"
+              value={values.price}
+              onChange={onChange}
+              min="0"
+              step="0.01"
+              placeholder={t.price}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.currencyShort}
+            <select
+              name="currency"
+              value={values.currency}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {CURRENCIES.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.fxShort}
+            <input
+              type="number"
+              name="fxRateOverride"
+              value={values.fxRateOverride}
+              onChange={onChange}
+              min="0"
+              step="0.0001"
+              placeholder={t.fxRate}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.incotermShort}
+            <select
+              name="incoterm"
+              value={values.incoterm}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {INCOTERMS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="rounded-xl border border-slate-800 p-4">

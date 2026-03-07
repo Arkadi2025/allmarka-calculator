@@ -105,7 +105,15 @@ export default function App() {
               onReset={reset}
               language={language}
             />
-            <HsSection />
+            <HsSection onApplyHsResult={(payload) => {
+              setValues((prev) => ({
+                ...prev,
+                hsMode: "manual",
+                manualHsCode: payload.code || prev.manualHsCode,
+                dutyRate: payload.dutyRate ?? prev.dutyRate,
+                vatRate: payload.vatRate ?? prev.vatRate
+              }));
+            }} />
             <ShippingSection values={values} onChange={handleChange} />
             <CustomsPanel values={values} onChange={handleChange} />
           </div>

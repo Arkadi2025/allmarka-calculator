@@ -4,10 +4,17 @@ import { COUNTRIES, HS_CHAPTERS, PORTS } from '../data/importData.js';
 import { HS_CATALOG } from '../data/hsCatalog.js';
 import { searchHsCode } from '../services/ai.js';
 
-const COUNTRY_OPTIONS = ['Israel', 'EU', 'Global'];
+const COUNTRY_OPTIONS = ['Israel', 'EU', 'Global', 'Canada', 'Germany'];
 const QUICK_PRODUCTS = HS_CATALOG.slice(0, 6).map((item) => item.keywords?.[0]).filter(Boolean);
 
-export default function HsSection() {
+const getCountryTax = (map, country) => {
+  if (!map) {
+    return null;
+  }
+  return map[country] ?? map.Israel ?? null;
+};
+
+export default function HsSection({ onApplyHsResult }) {
   const [productName, setProductName] = useState('');
   const [manualCode, setManualCode] = useState('');
   const [country, setCountry] = useState('Israel');
@@ -52,12 +59,15 @@ export default function HsSection() {
     setProductName(value);
   };
 
+  const dutyRate = getCountryTax(result?.compliance?.dutyByCountry, country);
+  const vatRate = getCountryTax(result?.compliance?.vatByCountry, country);
+
   return (
     <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 md:p-8">
       <h3 className="text-lg font-semibold">Подсказки по ТН ВЭД</h3>
       <p className="mt-2 text-sm text-slate-400">
-        Вернул поиск по названию продукта и все ключевые опции: страна, глава,
-        код, быстрые примеры и внешние базы.
+        Поиск по названию продукта с блоком требований к растаможке, документам и
+        ориентировочным ставкам для выбранной страны.
       </p>
 
       <form
@@ -71,7 +81,7 @@ export default function HsSection() {
               type="text"
               value={productName}
               onChange={(event) => setProductName(event.target.value)}
-              placeholder="Например: смартфон, ноутбук, кроссовки"
+              placeholder="Например: смартфон, ноутбук, сауна"
               className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-white outline-none placeholder:text-slate-500"
             />
           </label>
@@ -89,7 +99,7 @@ export default function HsSection() {
 
         <div className="grid gap-3 md:grid-cols-3">
           <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
-            Страна
+            Страна назначения
             <select
               value={country}
               onChange={(event) => setCountry(event.target.value)}
@@ -151,14 +161,68 @@ export default function HsSection() {
             HS {result.code} — {result.title}
           </p>
           <p className="mt-2 text-sm text-slate-300">{result.explanation}</p>
+
+          {result.compliance ? (
+            <div className="mt-4 space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
+              <div>
+                <p className="font-semibold text-white">Требования к ввозу / растаможке</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {result.compliance.requirements?.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">Документы</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {result.compliance.documents?.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">Нормативная база / ссылки</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {result.compliance.legalReferences?.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-lg border border-brand-500/30 bg-brand-900/10 p-3">
+                <p className="font-semibold text-white">Ориентировочные ставки для {country}</p>
+                <p className="mt-1">Пошлина: {dutyRate ?? 'N/A'}%</p>
+                <p>НДС/налог на импорт: {vatRate ?? 'N/A'}%</p>
+                <p className="mt-2 text-xs text-slate-400">{result.compliance.notes}</p>
+              </div>
+
+              {dutyRate != null || vatRate != null ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onApplyHsResult?.({
+                      code: result.code,
+                      dutyRate,
+                      vatRate
+                    })
+                  }
+                  className="rounded-full border border-brand-500/50 px-4 py-2 text-sm text-white hover:border-brand-500"
+                >
+                  Применить HS-код и ставки в расчёт
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-
-
       {!result && status === 'done' && legalGuidance ? (
         <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-900/10 p-4">
-          <p className="text-sm font-semibold text-amber-300">Юридическое пояснение при отсутствии HS-кода</p>
+          <p className="text-sm font-semibold text-amber-300">
+            Юридическое пояснение при отсутствии HS-кода
+          </p>
           <p className="mt-2 text-sm text-slate-300">{legalGuidance}</p>
         </div>
       ) : null}
