@@ -33,7 +33,13 @@ const DEFAULTS = {
   insurance: 60,
   dutyRate: DUTY.standardRate,
   vatRate: VAT.standardRate,
-  brokerage: CUSTOMS.brokerageDefault
+  brokerage: CUSTOMS.brokerageDefault,
+  fxRateGoods: 3.12,
+  fxRateTax: 3.4,
+  computerFee: 41,
+  securityFee: 48,
+  localLogistics: 3944,
+  inlandDelivery: 900
 };
 
 const countryProfileAliases = { us: 'usa', 'united states': 'usa', de: 'germany', il: 'israel', ae: 'uae' };
@@ -142,42 +148,77 @@ export default function App() {
   const marketEstimate = useMemo(() => estimateShipping({ values, now: new Date() }), [values]);
 
   const totals = useMemo(() => {
-    const price = toNumber(values.price);
+    const priceUsd = toNumber(values.price);
     const shippingManual = toNumber(values.shipping);
-    const shipping = values.shippingMode === 'calculate' ? marketEstimate.totalUsd : shippingManual;
-    const insurance = toNumber(values.insurance);
+    const shippingUsd = values.shippingMode === 'calculate' ? marketEstimate.totalUsd : shippingManual;
+    const insuranceUsd = toNumber(values.insurance);
     const quantity = toNumber(values.quantity);
+
     const dutyRate = toNumber(values.dutyRate) / 100;
     const vatRate = toNumber(values.vatRate) / 100;
+
+    const fxGoods = Math.max(0.0001, toNumber(values.fxRateGoods) || 1);
+    const fxTax = Math.max(0.0001, toNumber(values.fxRateTax) || fxGoods);
+
+    const computerFee = toNumber(values.computerFee);
+    const securityFee = toNumber(values.securityFee);
+    const localLogistics = toNumber(values.localLogistics);
+    const inlandDelivery = toNumber(values.inlandDelivery);
     const brokerage = toNumber(values.brokerage);
 
-    const subtotal = price + shipping + insurance;
-    const duty = subtotal * dutyRate;
-    const vatBase = subtotal + duty + brokerage;
-    const vat = vatBase * vatRate;
-    const total = subtotal + duty + vat + brokerage;
-    const safeQuantity = quantity > 0 ? quantity : 1;
-    const perUnit = total / safeQuantity;
+    const internationalUsd = shippingUsd + insuranceUsd;
+    const purchaseNis = priceUsd * fxGoods;
+    const internationalNis = internationalUsd * fxGoods;
+    const cifNis = purchaseNis + internationalNis;
+
+    const taxBaseNis = (priceUsd + internationalUsd) * fxTax;
+    const dutyNis = taxBaseNis * dutyRate;
+    const vatNis = (taxBaseNis + dutyNis) * vatRate;
+    const customsTotalNis = dutyNis + vatNis + computerFee + securityFee;
+
+    const totalNis = cifNis + customsTotalNis + localLogistics + inlandDelivery + brokerage;
+
     const destinationFx = DESTINATION_FX[values.countryTo] || {
       currency: getCountryProfile(values.countryTo).currency,
       rate: getCountryProfile(values.countryTo).fxRate
     };
     const manualFx = toNumber(values.fxRateOverride);
     const effectiveRate = manualFx > 0 ? manualFx : destinationFx.rate;
-    const totalInDestinationCurrency = total * effectiveRate;
+
+    const totalUsd = totalNis / fxGoods;
+    const safeQuantity = quantity > 0 ? quantity : 1;
+    const perUnitNis = totalNis / safeQuantity;
+    const perUnitUsd = totalUsd / safeQuantity;
+    const totalInDestinationCurrency = totalUsd * effectiveRate;
 
     return {
-      subtotal,
-      duty,
-      vat,
+      priceUsd,
+      shippingUsd,
+      insuranceUsd,
+      internationalUsd,
+      purchaseNis,
+      internationalNis,
+      cifNis,
+      taxBaseNis,
+      dutyNis,
+      vatNis,
+      customsTotalNis,
+      computerFee,
+      securityFee,
+      localLogistics,
+      inlandDelivery,
       brokerage,
-      total,
-      perUnit,
+      totalNis,
+      total: totalUsd,
+      perUnit: perUnitUsd,
+      perUnitNis,
       quantity: safeQuantity,
       destinationCurrency: destinationFx.currency,
       destinationRate: effectiveRate,
       destinationCountry: values.countryTo,
-      totalInDestinationCurrency
+      totalInDestinationCurrency,
+      fxGoods,
+      fxTax
     };
   }, [values, marketEstimate]);
 
