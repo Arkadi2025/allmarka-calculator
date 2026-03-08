@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { COUNTRIES, HS_CHAPTERS, HS_DATABASES, PORTS } from '../data/importData.js';
+import { COUNTRIES, HS_CHAPTERS, HS_DATABASES } from '../data/importData.js';
 import { HS_CATALOG } from '../data/hsCatalog.js';
 import { searchHsCode } from '../services/ai.js';
 
@@ -350,19 +350,6 @@ export default function HsSection({ productName, destinationCountry, onProductNa
           </div>
         </div>
       ) : null}
-
-      <div className="mt-4 grid gap-4 text-sm text-slate-400">
-        <div className="grid gap-3 md:grid-cols-2">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Страны (примеры)</p>
-            <p className="mt-2 text-slate-300">{COUNTRIES.join(', ')}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Основные порты</p>
-            <p className="mt-2 text-slate-300">{PORTS.join(', ')}</p>
-          </div>
-        </div>
-      </div>
     </section>
   );
 }
