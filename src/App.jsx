@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import CustomsPanel from './components/CustomsPanel.jsx';
 import Header from './components/Header.jsx';
@@ -7,6 +7,7 @@ import ProductForm from './components/ProductForm.jsx';
 import ResultsPanel from './components/ResultsPanel.jsx';
 import ShippingSection from './components/ShippingSection.jsx';
 import { COUNTRY_IMPORT_PROFILES, COUNTRY_OPTIONS, CUSTOMS, DESTINATION_FX, DUTY, VAT } from './data/importData.js';
+import { getMarketCustomsProfile } from './services/ai.js';
 
 const DEFAULTS = {
   productName: '',
@@ -144,6 +145,59 @@ const estimateShipping = ({ values, now }) => {
 export default function App() {
   const [language, setLanguage] = useState('en');
   const [values, setValues] = useState(DEFAULTS);
+  const [marketCustomsInfo, setMarketCustomsInfo] = useState({ source: 'pending', updatedAt: '', notes: '' });
+
+  useEffect(() => {
+    let active = true;
+
+    const applyMarketCustoms = async () => {
+      const profile = await getMarketCustomsProfile({
+        destinationCountry: values.countryTo,
+        originCountry: values.countryFrom,
+        productName: values.productName,
+        hsCode: values.manualHsCode,
+        weightKg: values.weight,
+        volumeCbm: values.volume,
+        priceUsd: values.price
+      });
+
+      if (!active) {
+        return;
+      }
+
+      setValues((prev) => ({
+        ...prev,
+        dutyRate: profile.dutyRate,
+        vatRate: profile.vatRate,
+        fxRateTax: profile.fxTax,
+        computerFee: profile.computerFee,
+        securityFee: profile.securityFee,
+        localLogistics: profile.localLogistics,
+        inlandDelivery: profile.inlandDelivery,
+        brokerage: profile.brokerage
+      }));
+
+      setMarketCustomsInfo({
+        source: profile.source,
+        updatedAt: profile.updatedAt,
+        notes: profile.notes
+      });
+    };
+
+    applyMarketCustoms();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    values.countryTo,
+    values.countryFrom,
+    values.productName,
+    values.manualHsCode,
+    values.weight,
+    values.volume,
+    values.price
+  ]);
 
   const marketEstimate = useMemo(() => estimateShipping({ values, now: new Date() }), [values]);
 
@@ -268,7 +322,7 @@ export default function App() {
               }}
             />
             <ShippingSection values={values} onChange={handleChange} marketEstimate={marketEstimate} />
-            <CustomsPanel values={values} onChange={handleChange} />
+            <CustomsPanel values={values} onChange={handleChange} marketCustomsInfo={marketCustomsInfo} />
           </div>
 
           <ResultsPanel totals={totals} />

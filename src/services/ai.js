@@ -266,3 +266,92 @@ export const searchHsCode = async ({ query, country }) => {
     countryProfile: getCountryProfile(country)
   };
 };
+
+
+const toFinite = (value, fallback = 0) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const fallbackMarketCustoms = ({ destinationCountry, weightKg, volumeCbm, priceUsd }) => {
+  const profile = getCountryProfile(destinationCountry);
+  const weight = Math.max(0, toFinite(weightKg));
+  const volume = Math.max(0, toFinite(volumeCbm));
+  const price = Math.max(0, toFinite(priceUsd));
+  const handlingUnits = Math.max(1, Math.ceil(Math.max(weight / 120, volume / 1.5)));
+
+  return {
+    dutyRate: profile.dutyRate,
+    vatRate: profile.vatRate,
+    fxTax: Number((profile.fxRate * 1.08).toFixed(4)),
+    computerFee: Number((32 + handlingUnits * 6).toFixed(2)),
+    securityFee: Number((38 + handlingUnits * 5).toFixed(2)),
+    localLogistics: Number((1800 + weight * 1.9 + volume * 420).toFixed(2)),
+    inlandDelivery: Number((380 + weight * 0.65 + volume * 120).toFixed(2)),
+    brokerage: Number((290 + price * 0.012).toFixed(2)),
+    source: 'fallback-model',
+    updatedAt: new Date().toISOString(),
+    notes:
+      'Fallback-модель на основе веса/объёма/стоимости. Для точной ставки используйте AI-агент и подтверждение от брокера.'
+  };
+};
+
+export const getMarketCustomsProfile = async ({
+  destinationCountry,
+  originCountry,
+  productName,
+  weightKg,
+  volumeCbm,
+  priceUsd,
+  hsCode
+}) => {
+  const fallback = fallbackMarketCustoms({ destinationCountry, weightKg, volumeCbm, priceUsd });
+
+  if (!AI_AGENT_URL) {
+    return fallback;
+  }
+
+  try {
+    const response = await fetch(AI_AGENT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(AI_AGENT_KEY ? { Authorization: `Bearer ${AI_AGENT_KEY}` } : {})
+      },
+      body: JSON.stringify({
+        task: 'market_customs_inputs',
+        destinationCountry,
+        originCountry,
+        productName,
+        hsCode,
+        weightKg,
+        volumeCbm,
+        priceUsd
+      })
+    });
+
+    if (!response.ok) {
+      return fallback;
+    }
+
+    const data = await response.json();
+
+    return {
+      dutyRate: toFinite(data.dutyRate, fallback.dutyRate),
+      vatRate: toFinite(data.vatRate, fallback.vatRate),
+      fxTax: toFinite(data.fxTax, fallback.fxTax),
+      computerFee: toFinite(data.computerFee, fallback.computerFee),
+      securityFee: toFinite(data.securityFee, fallback.securityFee),
+      localLogistics: toFinite(data.localLogistics, fallback.localLogistics),
+      inlandDelivery: toFinite(data.inlandDelivery, fallback.inlandDelivery),
+      brokerage: toFinite(data.brokerage, fallback.brokerage),
+      source: 'ai-agent',
+      updatedAt: data.updatedAt || new Date().toISOString(),
+      notes:
+        data.notes ||
+        'Оценка на основе AI-агента и рыночных данных. Подтверждайте финальные сборы у таможенного брокера.'
+    };
+  } catch {
+    return fallback;
+  }
+};
