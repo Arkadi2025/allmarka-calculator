@@ -3,13 +3,15 @@ const productFields = [
     label: 'Стоимость товара',
     name: 'price',
     hint: 'Инвойсная цена товара.',
-    unit: 'USD'
+    unit: 'USD',
+    step: '0.01'
   },
   {
     label: 'Количество единиц',
     name: 'quantity',
     hint: 'Нужно для расчёта себестоимости на единицу.',
-    unit: 'PCS'
+    unit: 'PCS',
+    step: '1'
   }
 ];
 
@@ -49,7 +51,7 @@ export default function ProductForm({ values, onChange, onReset }) {
                 value={values[field.name]}
                 onChange={onChange}
                 min="0"
-                step="0.01"
+                step={field.step}
                 className="w-full bg-transparent text-lg font-semibold text-white outline-none placeholder:text-slate-600"
               />
             </div>

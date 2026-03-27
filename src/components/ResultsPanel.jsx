@@ -26,7 +26,7 @@ export default function ResultsPanel({ totals }) {
       </div>
       <div className="mt-6 grid gap-4 text-sm">
         <div className="flex items-center justify-between text-slate-300">
-          <span>База (товар + доставка)</span>
+          <span>База (товар + доставка + страховка)</span>
           <span className="font-medium text-white">
             {formatCurrency(totals.subtotal)}
           </span>
@@ -44,9 +44,9 @@ export default function ResultsPanel({ totals }) {
           </span>
         </div>
         <div className="flex items-center justify-between text-slate-300">
-          <span>Себестоимость на единицу</span>
+          <span>Страхование</span>
           <span className="font-medium text-white">
-            {formatCurrency(totals.perUnit)}
+            {formatCurrency(totals.insurance)}
           </span>
         </div>
         <div className="flex items-center justify-between text-slate-300">

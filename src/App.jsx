@@ -20,7 +20,7 @@ const DEFAULTS = {
 
 const toNumber = (value) => {
   if (typeof value === 'string') {
-    const normalized = value.replace(',', '.');
+    const normalized = value.replace(/,/g, '.');
     const parsed = Number.parseFloat(normalized);
     return Number.isNaN(parsed) ? 0 : parsed;
   }
@@ -42,7 +42,7 @@ export default function App() {
 
     const subtotal = price + shipping + insurance;
     const duty = subtotal * dutyRate;
-    const vatBase = subtotal + duty + brokerage;
+    const vatBase = subtotal + duty;
     const vat = vatBase * vatRate;
     const total = subtotal + duty + vat + brokerage;
     const safeQuantity = quantity > 0 ? quantity : 1;
@@ -50,6 +50,7 @@ export default function App() {
 
     return {
       subtotal,
+      insurance,
       duty,
       vat,
       brokerage,
