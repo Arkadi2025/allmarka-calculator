@@ -1,0 +1,2357 @@
+ALLMARKA CALCULATOR - FULL APPLICATION CODE
+Generated from repository files.
+
+====================================================================================================
+FILE: package.json
+====================================================================================================
+{
+  "name": "allmarka-import-cost-calculator",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^5.4.11"
+  }
+}
+
+====================================================================================================
+FILE: vite.config.js
+====================================================================================================
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+
+====================================================================================================
+FILE: index.html
+====================================================================================================
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Import Cost Calculator</title>
+  </head>
+  <body class="bg-slate-950 text-slate-100">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+====================================================================================================
+FILE: tailwind.config.cjs
+====================================================================================================
+module.exports = {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca'
+        }
+      }
+    }
+  },
+  plugins: []
+};
+
+====================================================================================================
+FILE: postcss.config.cjs
+====================================================================================================
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {}
+  }
+};
+
+====================================================================================================
+FILE: netlify.toml
+====================================================================================================
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+====================================================================================================
+FILE: vercel.json
+====================================================================================================
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}
+
+====================================================================================================
+FILE: DEPLOY.md
+====================================================================================================
+# Deploy guide
+
+## Vercel (recommended)
+1. Push repository to GitHub.
+2. Open Vercel and click **Add New Project**.
+3. Import this repository.
+4. Vercel will detect Vite automatically (using `vercel.json`).
+5. Click **Deploy**.
+6. After deploy, Vercel gives you a public URL.
+
+## Netlify
+1. Push repository to GitHub.
+2. Open Netlify and click **Add new site** -> **Import an existing project**.
+3. Select this repository.
+4. Netlify uses settings from `netlify.toml`:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+5. Click **Deploy site**.
+6. After deploy, Netlify gives you a public URL.
+
+## Important note
+If your environment blocks npm packages (403), deploy must be done from a CI/platform
+that has normal access to npm registry.
+
+====================================================================================================
+FILE: src/main.jsx
+====================================================================================================
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './styles/index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+====================================================================================================
+FILE: src/App.jsx
+====================================================================================================
+import { useEffect, useMemo, useState } from 'react';
+
+import CustomsPanel from './components/CustomsPanel.jsx';
+import Header from './components/Header.jsx';
+import HsSection from './components/HsSection.jsx';
+import ProductForm from './components/ProductForm.jsx';
+import ResultsPanel from './components/ResultsPanel.jsx';
+import ShippingSection from './components/ShippingSection.jsx';
+import { COUNTRY_IMPORT_PROFILES, COUNTRY_OPTIONS, CUSTOMS, DESTINATION_FX, DUTY, VAT } from './data/importData.js';
+import { getMarketCustomsProfile } from './services/ai.js';
+
+const DEFAULTS = {
+  productName: '',
+  countryFrom: COUNTRY_OPTIONS[0],
+  countryTo: COUNTRY_OPTIONS[5],
+  originPort: '',
+  destinationPort: '',
+  quantity: 120,
+  price: 2500,
+  currency: 'USD',
+  incoterm: 'EXW',
+  dimensionMode: 'cbm',
+  volume: '',
+  weight: '',
+  hsMode: 'find',
+  manualHsCode: '',
+  hsFoundTitle: '',
+  hsFoundSource: '',
+  hsComplianceNote: '',
+  fxRateOverride: '',
+  shippingMode: 'calculate',
+  deliveryMode: 'sea',
+  shipping: 320,
+  insurance: 60,
+  dutyRate: DUTY.standardRate,
+  vatRate: VAT.standardRate,
+  brokerage: CUSTOMS.brokerageDefault,
+  fxRateGoods: 3.12,
+  fxRateTax: 3.4,
+  computerFee: 41,
+  securityFee: 48,
+  localLogistics: 3944,
+  inlandDelivery: 900
+};
+
+const countryProfileAliases = { us: 'usa', 'united states': 'usa', de: 'germany', il: 'israel', ae: 'uae' };
+
+const REGION_BY_COUNTRY = {
+  china: 'asia',
+  india: 'asia',
+  uae: 'middle-east',
+  turkey: 'europe',
+  germany: 'europe',
+  canada: 'north-america',
+  usa: 'north-america',
+  israel: 'middle-east'
+};
+
+const SHIPPING_RATE_BOOK = {
+  sea: { perCbm: 115, minCharge: 220, insuranceRatio: 0.02 },
+  air: { perChargeableKg: 6.8, minCharge: 160, volumetricKgPerCbm: 167, insuranceRatio: 0.01 },
+  land: { perKg: 1.15, perCbm: 78, minCharge: 140, insuranceRatio: 0.015 }
+};
+
+const getCountryProfile = (country) => {
+  const normalized = String(country || '').toLowerCase().trim();
+  const key = countryProfileAliases[normalized] || normalized;
+  return COUNTRY_IMPORT_PROFILES[key] || COUNTRY_IMPORT_PROFILES.default;
+};
+
+const toNumber = (value) => {
+  if (typeof value === 'string') {
+    const normalized = value.replace(',', '.');
+    const parsed = Number.parseFloat(normalized);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  const parsed = Number.parseFloat(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const getRouteFactor = (fromCountry, toCountry) => {
+  const from = String(fromCountry || '').toLowerCase().trim();
+  const to = String(toCountry || '').toLowerCase().trim();
+  if (!from || !to) {
+    return 1;
+  }
+  if (from === to) {
+    return 0.35;
+  }
+
+  const fromRegion = REGION_BY_COUNTRY[from];
+  const toRegion = REGION_BY_COUNTRY[to];
+  if (fromRegion && toRegion && fromRegion === toRegion) {
+    return 0.8;
+  }
+
+  return 1.18;
+};
+
+const getMarketFactor = (date) => {
+  const hourFactor = 1 + ((date.getUTCHours() - 12) / 24) * 0.06;
+  const dayFactor = 1 + ((date.getUTCDay() - 3) / 7) * 0.03;
+  return Math.max(0.9, Math.min(1.12, hourFactor * dayFactor));
+};
+
+const estimateShipping = ({ values, now }) => {
+  const mode = values.deliveryMode || 'sea';
+  const rates = SHIPPING_RATE_BOOK[mode] || SHIPPING_RATE_BOOK.sea;
+  const volume = Math.max(0, toNumber(values.volume));
+  const weight = Math.max(0, toNumber(values.weight));
+  const routeFactor = getRouteFactor(values.countryFrom, values.countryTo);
+  const marketFactor = getMarketFactor(now);
+
+  let baseCost = 0;
+  let basisLabel = '';
+
+  if (mode === 'sea') {
+    const usedCbm = volume > 0 ? volume : Math.max(0.1, weight / 350);
+    baseCost = Math.max(rates.minCharge, usedCbm * rates.perCbm);
+    basisLabel = `${usedCbm.toFixed(2)} CBM × ${rates.perCbm} USD`;
+  } else if (mode === 'air') {
+    const chargeableWeight = Math.max(weight, volume * rates.volumetricKgPerCbm, 1);
+    baseCost = Math.max(rates.minCharge, chargeableWeight * rates.perChargeableKg);
+    basisLabel = `${chargeableWeight.toFixed(1)} chargeable kg × ${rates.perChargeableKg} USD`;
+  } else {
+    const byWeight = weight * rates.perKg;
+    const byVolume = volume * rates.perCbm;
+    const dominant = Math.max(byWeight, byVolume);
+    baseCost = Math.max(rates.minCharge, dominant);
+    basisLabel = `max(${weight.toFixed(1)}kg×${rates.perKg}, ${volume.toFixed(2)}m³×${rates.perCbm})`;
+  }
+
+  const totalUsd = baseCost * routeFactor * marketFactor;
+
+  return {
+    mode,
+    basisLabel,
+    routeFactor,
+    marketFactor,
+    totalUsd,
+    generatedAt: now.toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+  };
+};
+
+export default function App() {
+  const [language, setLanguage] = useState('en');
+  const [values, setValues] = useState(DEFAULTS);
+  const [marketCustomsInfo, setMarketCustomsInfo] = useState({ source: 'pending', updatedAt: '', notes: '' });
+
+  useEffect(() => {
+    let active = true;
+
+    const applyMarketCustoms = async () => {
+      const profile = await getMarketCustomsProfile({
+        destinationCountry: values.countryTo,
+        originCountry: values.countryFrom,
+        productName: values.productName,
+        hsCode: values.manualHsCode,
+        weightKg: values.weight,
+        volumeCbm: values.volume,
+        priceUsd: values.price
+      });
+
+      if (!active) {
+        return;
+      }
+
+      setValues((prev) => ({
+        ...prev,
+        dutyRate: profile.dutyRate,
+        vatRate: profile.vatRate,
+        fxRateTax: profile.fxTax,
+        computerFee: profile.computerFee,
+        securityFee: profile.securityFee,
+        localLogistics: profile.localLogistics,
+        inlandDelivery: profile.inlandDelivery,
+        brokerage: profile.brokerage
+      }));
+
+      setMarketCustomsInfo({
+        source: profile.source,
+        updatedAt: profile.updatedAt,
+        notes: profile.notes
+      });
+    };
+
+    applyMarketCustoms();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    values.countryTo,
+    values.countryFrom,
+    values.productName,
+    values.manualHsCode,
+    values.weight,
+    values.volume,
+    values.price
+  ]);
+
+  const marketEstimate = useMemo(() => estimateShipping({ values, now: new Date() }), [values]);
+
+  const totals = useMemo(() => {
+    const priceUsd = toNumber(values.price);
+    const shippingManual = toNumber(values.shipping);
+    const shippingUsd = values.shippingMode === 'calculate' ? marketEstimate.totalUsd : shippingManual;
+    const insuranceUsd = toNumber(values.insurance);
+    const quantity = toNumber(values.quantity);
+
+    const dutyRate = toNumber(values.dutyRate) / 100;
+    const vatRate = toNumber(values.vatRate) / 100;
+
+    const fxGoods = Math.max(0.0001, toNumber(values.fxRateGoods) || 1);
+    const fxTax = Math.max(0.0001, toNumber(values.fxRateTax) || fxGoods);
+
+    const computerFee = toNumber(values.computerFee);
+    const securityFee = toNumber(values.securityFee);
+    const localLogistics = toNumber(values.localLogistics);
+    const inlandDelivery = toNumber(values.inlandDelivery);
+    const brokerage = toNumber(values.brokerage);
+
+    const internationalUsd = shippingUsd + insuranceUsd;
+    const purchaseNis = priceUsd * fxGoods;
+    const internationalNis = internationalUsd * fxGoods;
+    const cifNis = purchaseNis + internationalNis;
+
+    const taxBaseNis = (priceUsd + internationalUsd) * fxTax;
+    const dutyNis = taxBaseNis * dutyRate;
+    const vatNis = (taxBaseNis + dutyNis) * vatRate;
+    const customsTotalNis = dutyNis + vatNis + computerFee + securityFee;
+
+    const totalNis = cifNis + customsTotalNis + localLogistics + inlandDelivery + brokerage;
+
+    const destinationFx = DESTINATION_FX[values.countryTo] || {
+      currency: getCountryProfile(values.countryTo).currency,
+      rate: getCountryProfile(values.countryTo).fxRate
+    };
+    const manualFx = toNumber(values.fxRateOverride);
+    const effectiveRate = manualFx > 0 ? manualFx : destinationFx.rate;
+
+    const totalUsd = totalNis / fxGoods;
+    const safeQuantity = quantity > 0 ? quantity : 1;
+    const perUnitNis = totalNis / safeQuantity;
+    const perUnitUsd = totalUsd / safeQuantity;
+    const totalInDestinationCurrency = totalUsd * effectiveRate;
+
+    return {
+      priceUsd,
+      shippingUsd,
+      insuranceUsd,
+      internationalUsd,
+      purchaseNis,
+      internationalNis,
+      cifNis,
+      taxBaseNis,
+      dutyNis,
+      vatNis,
+      customsTotalNis,
+      computerFee,
+      securityFee,
+      localLogistics,
+      inlandDelivery,
+      brokerage,
+      totalNis,
+      total: totalUsd,
+      perUnit: perUnitUsd,
+      perUnitNis,
+      quantity: safeQuantity,
+      destinationCurrency: destinationFx.currency,
+      destinationRate: effectiveRate,
+      destinationCountry: values.countryTo,
+      totalInDestinationCurrency,
+      fxGoods,
+      fxTax
+    };
+  }, [values, marketEstimate]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setValues((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const reset = () => setValues(DEFAULTS);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
+        <Header language={language} onLanguageChange={setLanguage} />
+
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="flex flex-col gap-6">
+            <ProductForm
+              values={values}
+              onChange={handleChange}
+              onReset={reset}
+              language={language}
+            />
+            <HsSection
+              productName={values.productName}
+              destinationCountry={values.countryTo}
+              onProductNameChange={(value) =>
+                setValues((prev) => ({
+                  ...prev,
+                  productName: value
+                }))
+              }
+              onApplyHsResult={(payload) => {
+                setValues((prev) => ({
+                  ...prev,
+                  hsMode: 'manual',
+                  manualHsCode: payload.code || prev.manualHsCode,
+                  dutyRate: payload.dutyRate ?? prev.dutyRate,
+                  vatRate: payload.vatRate ?? prev.vatRate,
+                  hsFoundTitle: payload.title || '',
+                  hsFoundSource: payload.source || '',
+                  hsComplianceNote: payload.note || ''
+                }));
+              }}
+            />
+            <ShippingSection values={values} onChange={handleChange} marketEstimate={marketEstimate} />
+            <CustomsPanel values={values} onChange={handleChange} marketCustomsInfo={marketCustomsInfo} />
+          </div>
+
+          <ResultsPanel totals={totals} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+====================================================================================================
+FILE: src/styles/index.css
+====================================================================================================
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+====================================================================================================
+FILE: src/components/Header.jsx
+====================================================================================================
+const LANG_OPTIONS = [
+  { value: 'en', label: 'EN' },
+  { value: 'ru', label: 'RU' },
+  { value: 'he', label: 'HE' }
+];
+
+const COPY = {
+  en: {
+    tag: 'Logistics Toolkit',
+    title: 'Import Cost Calculator',
+    desc: 'Estimate full landed import cost and quickly compare suppliers, routes and customs scenarios.',
+    lang: 'Language'
+  },
+  ru: {
+    tag: 'Logistics Toolkit',
+    title: 'Import Cost Calculator',
+    desc: 'Оцените полную стоимость ввоза товара и быстро сравнивайте поставщиков, маршруты и таможенные сценарии.',
+    lang: 'Язык'
+  },
+  he: {
+    tag: 'ערכת לוגיסטיקה',
+    title: 'מחשבון עלות יבוא',
+    desc: 'חשב עלות יבוא מלאה והשווה ספקים, נתיבים ותרחישי מכס במהירות.',
+    lang: 'שפה'
+  }
+};
+
+export default function Header({ language, onLanguageChange }) {
+  const t = COPY[language] || COPY.en;
+
+  return (
+    <header className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">{t.tag}</p>
+        <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+          {t.lang}
+          <select
+            value={language}
+            onChange={(event) => onLanguageChange(event.target.value)}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+          >
+            {LANG_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <h1 className="text-4xl font-semibold text-white md:text-5xl">{t.title}</h1>
+      <p className="max-w-3xl text-base text-slate-300 md:text-lg">{t.desc}</p>
+    </header>
+  );
+}
+
+====================================================================================================
+FILE: src/components/ProductForm.jsx
+====================================================================================================
+import { COUNTRY_OPTIONS, PORTS_BY_COUNTRY } from '../data/importData.js';
+
+const COPY = {
+  en: {
+    title: 'Shipment setup',
+    subtitle: 'Configure product and route details.',
+    reset: 'Reset',
+    productName: 'Product name',
+    countryFrom: 'Country from',
+    countryTo: 'Country to',
+    originPort: 'Origin port',
+    destinationPort: 'Destination port',
+    countryHint: 'Choose from the arrow list or switch to manual country input.',
+    autoSelect: 'Auto-select',
+    quantity: 'Quantity',
+    price: 'Price',
+    currency: 'Currency',
+    incoterm: 'Incoterm',
+    dimensions: 'Dimensions & Weight',
+    cbm: 'CBM',
+    packageSize: 'Package Size',
+    container: 'Container',
+    volume: 'Volume (m3)',
+    weight: 'Weight (kg)',
+    hsCode: 'HS Code',
+    findIt: 'Find it',
+    iKnowIt: 'I know it',
+    manualHs: 'Enter HS code manually',
+    fxRate: 'FX rate USD to destination currency',
+    shipping: 'Shipping',
+    calculate: 'Calculate',
+    knowCost: 'I know cost',
+    shippingCost: 'Shipping cost',
+    hsCollected: 'Collected HS details',
+    qtyShort: 'Qty',
+    priceShort: 'Price',
+    currencyShort: 'Currency',
+    fxShort: 'FX',
+    incotermShort: 'Incoterm'
+  },
+  ru: {
+    title: 'Параметры поставки',
+    subtitle: 'Настройте товар и маршрут.',
+    reset: 'Сбросить',
+    productName: 'Название товара',
+    countryFrom: 'Страна отправления',
+    countryTo: 'Страна назначения',
+    originPort: 'Порт отправления',
+    destinationPort: 'Порт назначения',
+    countryHint: 'Выберите страну стрелкой или переключитесь на ручной ввод.',
+    autoSelect: 'Автовыбор',
+    quantity: 'Количество',
+    price: 'Цена',
+    currency: 'Валюта',
+    incoterm: 'Инкотермс',
+    dimensions: 'Габариты и вес',
+    cbm: 'CBM',
+    packageSize: 'Размер упаковки',
+    container: 'Контейнер',
+    volume: 'Объём (м3)',
+    weight: 'Вес (кг)',
+    hsCode: 'HS код',
+    findIt: 'Найти',
+    iKnowIt: 'Я знаю код',
+    manualHs: 'Введите HS код вручную',
+    fxRate: 'Курс USD к валюте назначения',
+    shipping: 'Доставка',
+    calculate: 'Рассчитать',
+    knowCost: 'Я знаю стоимость',
+    shippingCost: 'Стоимость доставки',
+    hsCollected: 'Собранные данные ТН ВЭД',
+    qtyShort: 'Кол-во',
+    priceShort: 'Цена',
+    currencyShort: 'Валюта',
+    fxShort: 'Курс',
+    incotermShort: 'Инкотермс'
+  },
+  he: {
+    title: 'הגדרות משלוח',
+    subtitle: 'הגדר פרטי מוצר ונתיב.',
+    reset: 'איפוס',
+    productName: 'שם מוצר',
+    countryFrom: 'מדינת מקור',
+    countryTo: 'מדינת יעד',
+    originPort: 'נמל יציאה',
+    destinationPort: 'נמל יעד',
+    countryHint: 'בחר מדינה מהחץ או עבור להזנה ידנית.',
+    autoSelect: 'בחירה אוטומטית',
+    quantity: 'כמות',
+    price: 'מחיר',
+    currency: 'מטבע',
+    incoterm: 'Incoterm',
+    dimensions: 'נפח ומשקל',
+    cbm: 'CBM',
+    packageSize: 'גודל אריזה',
+    container: 'מכולה',
+    volume: 'נפח (מ"ק)',
+    weight: 'משקל (ק"ג)',
+    hsCode: 'קוד HS',
+    findIt: 'מצא',
+    iKnowIt: 'אני יודע',
+    manualHs: 'הזן קוד HS ידנית',
+    fxRate: 'שער USD למטבע היעד',
+    shipping: 'משלוח',
+    calculate: 'חשב',
+    knowCost: 'אני יודע עלות',
+    shippingCost: 'עלות משלוח',
+    hsCollected: 'פרטי HS שנאספו',
+    qtyShort: 'כמות',
+    priceShort: 'מחיר',
+    currencyShort: 'מטבע',
+    fxShort: 'שער',
+    incotermShort: 'Incoterm'
+  }
+};
+
+const CURRENCIES = ['USD', 'EUR', 'ILS'];
+const INCOTERMS = ['EXW', 'FOB', 'CIF', 'DAP'];
+
+const getPorts = (country) => PORTS_BY_COUNTRY[country] || [];
+const CUSTOM_COUNTRY_VALUE = '__custom__';
+
+const isPresetCountry = (country) => COUNTRY_OPTIONS.includes(country);
+
+export default function ProductForm({ values, onChange, onReset, language }) {
+  const t = COPY[language] || COPY.en;
+  const originPorts = getPorts(values.countryFrom);
+  const destinationPorts = getPorts(values.countryTo);
+  const dir = language === 'he' ? 'rtl' : 'ltr';
+  const countryFromSelectValue = isPresetCountry(values.countryFrom)
+    ? values.countryFrom
+    : CUSTOM_COUNTRY_VALUE;
+  const countryToSelectValue = isPresetCountry(values.countryTo)
+    ? values.countryTo
+    : CUSTOM_COUNTRY_VALUE;
+
+  const handleCountrySelect = (field) => (event) => {
+    const nextValue = event.target.value;
+    if (nextValue === CUSTOM_COUNTRY_VALUE) {
+      if (isPresetCountry(values[field])) {
+        onChange({ target: { name: field, value: '' } });
+      }
+      return;
+    }
+
+    onChange({ target: { name: field, value: nextValue } });
+  };
+
+  const handleCountryCustomInput = (field) => (event) => {
+    onChange({ target: { name: field, value: event.target.value } });
+  };
+
+  return (
+    <section
+      dir={dir}
+      className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg shadow-black/20 md:p-8"
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">{t.title}</h2>
+          <p className="text-sm text-slate-400">{t.subtitle}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onReset}
+          className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-brand-500 hover:text-white"
+        >
+          {t.reset}
+        </button>
+      </div>
+
+      <div className="mt-6 grid gap-4">
+        <input
+          type="text"
+          name="productName"
+          value={values.productName}
+          onChange={onChange}
+          placeholder={t.productName}
+          className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+        />
+
+        <p className="text-xs text-slate-500">{t.countryHint}</p>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.countryFrom}
+            <select
+              name="countryFromSelect"
+              value={countryFromSelectValue}
+              onChange={handleCountrySelect('countryFrom')}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {COUNTRY_OPTIONS.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+              <option value={CUSTOM_COUNTRY_VALUE}>Другая страна (ввести вручную)</option>
+            </select>
+            {countryFromSelectValue === CUSTOM_COUNTRY_VALUE ? (
+              <input
+                type="text"
+                name="countryFrom"
+                value={values.countryFrom}
+                onChange={handleCountryCustomInput('countryFrom')}
+                placeholder="China / Brazil / UAE ..."
+                className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+              />
+            ) : null}
+          </label>
+
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.countryTo}
+            <select
+              name="countryToSelect"
+              value={countryToSelectValue}
+              onChange={handleCountrySelect('countryTo')}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {COUNTRY_OPTIONS.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+              <option value={CUSTOM_COUNTRY_VALUE}>Другая страна (ввести вручную)</option>
+            </select>
+            {countryToSelectValue === CUSTOM_COUNTRY_VALUE ? (
+              <input
+                type="text"
+                name="countryTo"
+                value={values.countryTo}
+                onChange={handleCountryCustomInput('countryTo')}
+                placeholder="Canada / Germany / Japan ..."
+                className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+              />
+            ) : null}
+          </label>
+
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.originPort}
+            <input
+              type="text"
+              list="origin-ports"
+              name="originPort"
+              value={values.originPort}
+              onChange={onChange}
+              placeholder={t.autoSelect}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+
+          <label className="grid gap-2 text-sm text-slate-300">
+            {t.destinationPort}
+            <input
+              type="text"
+              list="destination-ports"
+              name="destinationPort"
+              value={values.destinationPort}
+              onChange={onChange}
+              placeholder={t.autoSelect}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+        </div>
+
+        <datalist id="origin-ports">
+          {originPorts.map((port) => (
+            <option key={port} value={port} />
+          ))}
+        </datalist>
+        <datalist id="destination-ports">
+          {destinationPorts.map((port) => (
+            <option key={port} value={port} />
+          ))}
+        </datalist>
+
+        <div className="grid gap-4 md:grid-cols-5">
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.qtyShort}
+            <input
+              type="number"
+              name="quantity"
+              value={values.quantity}
+              onChange={onChange}
+              min="0"
+              step="1"
+              placeholder={t.quantity}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.priceShort}
+            <input
+              type="number"
+              name="price"
+              value={values.price}
+              onChange={onChange}
+              min="0"
+              step="0.01"
+              placeholder={t.price}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.currencyShort}
+            <select
+              name="currency"
+              value={values.currency}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {CURRENCIES.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.fxShort}
+            <input
+              type="number"
+              name="fxRateOverride"
+              value={values.fxRateOverride}
+              onChange={onChange}
+              min="0"
+              step="0.0001"
+              placeholder={t.fxRate}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </label>
+          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            {t.incotermShort}
+            <select
+              name="incoterm"
+              value={values.incoterm}
+              onChange={onChange}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            >
+              {INCOTERMS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 p-4">
+          <p className="text-sm font-medium text-slate-200">{t.dimensions}</p>
+          <div className="mt-3 flex flex-wrap gap-6 text-sm text-slate-300">
+            {['cbm', 'package', 'container'].map((mode) => (
+              <label key={mode} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="dimensionMode"
+                  value={mode}
+                  checked={values.dimensionMode === mode}
+                  onChange={onChange}
+                />
+                <span>
+                  {mode === 'cbm'
+                    ? t.cbm
+                    : mode === 'package'
+                      ? t.packageSize
+                      : t.container}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <input
+              type="number"
+              name="volume"
+              value={values.volume}
+              onChange={onChange}
+              step="0.01"
+              min="0"
+              placeholder={t.volume}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+            <input
+              type="number"
+              name="weight"
+              value={values.weight}
+              onChange={onChange}
+              step="0.01"
+              min="0"
+              placeholder={t.weight}
+              className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+====================================================================================================
+FILE: src/components/HsSection.jsx
+====================================================================================================
+import { useEffect, useMemo, useState } from 'react';
+
+import { COUNTRIES, HS_CHAPTERS, HS_DATABASES } from '../data/importData.js';
+import { HS_CATALOG } from '../data/hsCatalog.js';
+import { searchHsCode } from '../services/ai.js';
+
+const QUICK_PRODUCTS = HS_CATALOG.slice(0, 6).map((item) => item.keywords?.[0]).filter(Boolean);
+
+const getCountryTax = (map, country) => {
+  if (!map) {
+    return null;
+  }
+  return map[country] ?? map.Israel ?? null;
+};
+
+const getSourceLabel = (searchSource) => {
+  if (searchSource === 'ai-agent') {
+    return 'AI-агент + локальный каталог';
+  }
+  if (searchSource === 'primary-search') {
+    return 'Поисковый источник + локальный каталог';
+  }
+  if (searchSource === 'catalog-fallback') {
+    return 'Локальный каталог приложения';
+  }
+  return 'Источник не определён';
+};
+
+const getSourceDisclaimer = (searchSource) => {
+  if (searchSource === 'ai-agent') {
+    return 'AI-ответ не является официальным классификационным решением. Для декларирования подтвердите код у брокера или в таможне.';
+  }
+  if (searchSource === 'primary-search') {
+    return 'Поисковая выдача используется только как вспомогательный сигнал. Юридически значимыми являются только официальные таможенные базы/решения.';
+  }
+  return 'Данные каталога являются справочными. Для подачи декларации требуется проверка по официальным источникам и/или предварительное решение таможни.';
+};
+
+export default function HsSection({ productName, destinationCountry, onProductNameChange, onApplyHsResult }) {
+  const [manualCode, setManualCode] = useState('');
+  const [country, setCountry] = useState(destinationCountry || 'Israel');
+
+  useEffect(() => {
+    if (destinationCountry) {
+      setCountry(destinationCountry);
+    }
+  }, [destinationCountry]);
+
+  const [chapter, setChapter] = useState('');
+  const [result, setResult] = useState(null);
+  const [alternatives, setAlternatives] = useState([]);
+  const [links, setLinks] = useState([]);
+  const [status, setStatus] = useState('idle');
+  const [legalGuidance, setLegalGuidance] = useState('');
+  const [searchSource, setSearchSource] = useState('catalog-fallback');
+
+  const searchQuery = useMemo(() => {
+    return [productName, manualCode, chapter].filter(Boolean).join(' ');
+  }, [productName, manualCode, chapter]);
+
+  const officialSources = useMemo(() => {
+    const merged = [...links, ...HS_DATABASES];
+    const seen = new Set();
+    return merged.filter((item) => {
+      const key = item.url;
+      if (!key || seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }, [links]);
+
+  const statusText = useMemo(() => {
+    if (status === 'loading') {
+      return 'Поиск...';
+    }
+    if (result) {
+      const sourceLabel =
+        searchSource === 'ai-agent'
+          ? 'AI-агент'
+          : searchSource === 'primary-search'
+            ? 'основной поисковик'
+            : 'локальный каталог';
+      return `Найдено: ${result.code || 'N/A'} — ${result.title} (точность ${Math.round(
+        result.confidence * 100
+      )}%, источник: ${sourceLabel})`;
+    }
+    if (status === 'done') {
+      return 'Совпадение не найдено. Проверьте название товара, страну, главу и откройте внешние базы ниже.';
+    }
+    return 'Поиск работает по названию товара, коду, главе и ключевым словам. При VITE_AI_AGENT_URL включается AI-анализ для любых стран.';
+  }, [result, searchSource, status]);
+
+  const handleSearch = async (event) => {
+    event.preventDefault();
+    setStatus('loading');
+    const response = await searchHsCode({ query: searchQuery, country });
+    setResult(response.result);
+    setAlternatives(response.alternatives);
+    setLinks(response.links);
+    setLegalGuidance(response.legalGuidance || '');
+    setSearchSource(response.searchSource || 'catalog-fallback');
+
+    if (response.countryProfile) {
+      onApplyHsResult?.({
+        dutyRate: response.countryProfile.dutyRate,
+        vatRate: response.countryProfile.vatRate,
+        note: response.countryProfile.notes || ''
+      });
+    }
+    setStatus('done');
+  };
+
+  const setQuickProduct = (value) => {
+    onProductNameChange?.(value);
+  };
+
+  const dutyRate = getCountryTax(result?.compliance?.dutyByCountry, country);
+  const vatRate = getCountryTax(result?.compliance?.vatByCountry, country);
+
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 md:p-8">
+      <h3 className="text-lg font-semibold">Подсказки по ТН ВЭД + AI анализ</h3>
+      <p className="mt-2 text-sm text-slate-400">
+        Поиск по названию продукта, ориентировочные ставки и требования по растаможке для любой
+        страны назначения.
+      </p>
+
+      <form
+        onSubmit={handleSearch}
+        className="mt-4 grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-4"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            Название продукта
+            <input
+              type="text"
+              value={productName}
+              onChange={(event) => onProductNameChange?.(event.target.value)}
+              placeholder="Например: смартфон, ноутбук, сауна"
+              className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-white outline-none placeholder:text-slate-500"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            Код / доп. ключ
+            <input
+              type="text"
+              value={manualCode}
+              onChange={(event) => setManualCode(event.target.value)}
+              placeholder="Например: 8517"
+              className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-white outline-none placeholder:text-slate-500"
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            Страна назначения
+            <input
+              type="text"
+              list="hs-country-options"
+              value={country}
+              onChange={(event) => setCountry(event.target.value)}
+              className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-slate-100 outline-none"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+            Глава ТН ВЭД
+            <select
+              value={chapter}
+              onChange={(event) => setChapter(event.target.value)}
+              className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm normal-case tracking-normal text-slate-100 outline-none"
+            >
+              <option value="">Любая</option>
+              {HS_CHAPTERS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="w-full rounded-xl border border-brand-500/60 bg-brand-600/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600/30"
+            >
+              Найти HS и рассчитать ставки
+            </button>
+          </div>
+        </div>
+
+        <datalist id="hs-country-options">
+          {COUNTRIES.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+
+        <div className="flex flex-wrap gap-2">
+          {QUICK_PRODUCTS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setQuickProduct(item)}
+              className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-brand-500 hover:text-white"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-xs text-slate-400">{statusText}</div>
+      </form>
+
+      {result ? (
+        <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-900/10 p-4">
+          <p className="text-sm font-semibold text-emerald-300">
+            HS {result.code || 'N/A'} — {result.title}
+          </p>
+          <p className="mt-2 text-sm text-slate-300">{result.explanation}</p>
+
+          {result.compliance ? (
+            <div className="mt-4 space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
+              <div>
+                <p className="font-semibold text-white">Источник данных и официальный статус</p>
+                <p className="mt-2">Текущий источник: {getSourceLabel(searchSource)}.</p>
+                <p className="mt-1 text-xs text-amber-300">{getSourceDisclaimer(searchSource)}</p>
+                <p className="mt-2 text-xs text-slate-400">
+                  Официальное закрепление: итоговый HS-код и ставки подтверждаются только по базам
+                  таможенных органов/предварительным решениям (ruling/BTI) страны назначения.
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                  {officialSources.map((item) => (
+                    <li key={item.url}>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-300 hover:text-brand-200"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">Требования к ввозу / растаможке</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {(result.compliance.requirements || []).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">Документы</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {(result.compliance.documents || []).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">Нормативная база / ссылки</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {(result.compliance.legalReferences || []).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-lg border border-brand-500/30 bg-brand-900/10 p-3">
+                <p className="font-semibold text-white">Ориентировочные ставки для {country}</p>
+                <p className="mt-1">Пошлина: {dutyRate ?? 'N/A'}%</p>
+                <p>НДС/налог на импорт: {vatRate ?? 'N/A'}%</p>
+                <p className="mt-2 text-xs text-slate-400">{result.compliance.notes}</p>
+                <p className="mt-2 text-xs text-amber-300">
+                  Ставки выше — ориентир. Официально закрепляются через национальный тариф/базу
+                  таможни (например TARIC/CBSA/Israel Customs) и могут зависеть от подкатегории,
+                  происхождения, преференций и даты декларации.
+                </p>
+              </div>
+
+              {dutyRate != null || vatRate != null ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onApplyHsResult?.({
+                      code: result.code,
+                      title: result.title,
+                      source: searchSource,
+                      note: result.compliance?.notes || '',
+                      dutyRate,
+                      vatRate
+                    })
+                  }
+                  className="rounded-full border border-brand-500/50 px-4 py-2 text-sm text-white hover:border-brand-500"
+                >
+                  Применить HS-код и ставки в расчёт
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!result && status === 'done' && legalGuidance ? (
+        <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-900/10 p-4">
+          <p className="text-sm font-semibold text-amber-300">
+            Юридическое пояснение при отсутствии HS-кода
+          </p>
+          <p className="mt-2 text-sm text-slate-300">{legalGuidance}</p>
+        </div>
+      ) : null}
+
+      {alternatives.length > 0 ? (
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Альтернативные варианты</p>
+          <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            {alternatives.map((item) => (
+              <li key={item.code}>
+                • {item.code} — {item.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {links.length > 0 ? (
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-300">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Внешние базы HS для {country}</p>
+          <div className="mt-3 grid gap-2">
+            {links.map((database) => (
+              <a
+                key={database.url}
+                href={database.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between rounded-xl border border-slate-800 px-3 py-2 text-sm text-slate-200 transition hover:border-brand-500 hover:text-white"
+              >
+                <span>{database.name}</span>
+                <span className="text-xs text-slate-500">Открыть ↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+====================================================================================================
+FILE: src/components/ShippingSection.jsx
+====================================================================================================
+const shippingFields = [
+  {
+    label: 'Международная доставка',
+    name: 'shipping',
+    hint: 'Если выбран авторасчёт — применяется рыночная оценка по весу/объёму и типу доставки.',
+    unit: 'USD'
+  },
+  {
+    label: 'Страхование',
+    name: 'insurance',
+    hint: 'Опционально, при расчёте рисков.',
+    unit: 'USD'
+  }
+];
+
+const DELIVERY_MODES = [
+  { value: 'sea', label: 'Морем' },
+  { value: 'air', label: 'Воздухом' },
+  { value: 'land', label: 'Сухопутно' }
+];
+
+export default function ShippingSection({ values, onChange, marketEstimate }) {
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 md:p-8">
+      <h3 className="text-lg font-semibold">Логистика</h3>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <label className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+          <span className="text-sm font-medium text-slate-200">Тип доставки</span>
+          <select
+            name="deliveryMode"
+            value={values.deliveryMode}
+            onChange={onChange}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          >
+            {DELIVERY_MODES.map((mode) => (
+              <option key={mode.value} value={mode.value}>
+                {mode.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+          <span className="text-sm font-medium text-slate-200">Режим стоимости доставки</span>
+          <select
+            name="shippingMode"
+            value={values.shippingMode}
+            onChange={onChange}
+            className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white"
+          >
+            <option value="calculate">Рыночная автооценка (по весу/объёму)</option>
+            <option value="manual">Ввести вручную</option>
+          </select>
+        </label>
+      </div>
+
+      {marketEstimate ? (
+        <div className="mt-4 rounded-2xl border border-brand-500/30 bg-brand-900/10 p-4 text-sm text-slate-200">
+          <p className="font-semibold">Текущая рыночная оценка: {marketEstimate.totalUsd.toFixed(2)} USD</p>
+          <p className="mt-1 text-xs text-slate-300">
+            Основа: {marketEstimate.basisLabel}, коэффициент рынка: {marketEstimate.marketFactor.toFixed(3)},
+            маршрутный коэффициент: {marketEstimate.routeFactor.toFixed(2)}.
+          </p>
+          <p className="mt-1 text-xs text-slate-400">Обновлено: {marketEstimate.generatedAt}</p>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-5">
+        {shippingFields.map((field) => (
+          <label
+            key={field.name}
+            className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-4"
+          >
+            <span className="text-sm font-medium text-slate-200">{field.label}</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">
+                {field.unit}
+              </span>
+              <input
+                type="number"
+                name={field.name}
+                value={field.name === 'shipping' && values.shippingMode === 'calculate' && marketEstimate
+                  ? marketEstimate.totalUsd.toFixed(2)
+                  : values[field.name]}
+                onChange={onChange}
+                min="0"
+                step="0.01"
+                disabled={field.name === 'shipping' && values.shippingMode === 'calculate'}
+                className="w-full bg-transparent text-lg font-semibold text-white outline-none placeholder:text-slate-600 disabled:cursor-not-allowed disabled:text-slate-400"
+              />
+            </div>
+            <span className="text-xs text-slate-500">{field.hint}</span>
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+====================================================================================================
+FILE: src/components/CustomsPanel.jsx
+====================================================================================================
+const customsFields = [
+  {
+    label: 'Ставка пошлины, % (рыночная)',
+    name: 'dutyRate',
+    hint: 'Подтягивается через AI-агент/рыночную модель.',
+    unit: '%',
+    editable: false
+  },
+  {
+    label: 'НДС, % (рыночный)',
+    name: 'vatRate',
+    hint: 'Подтягивается через AI-агент/рыночную модель.',
+    unit: '%',
+    editable: false
+  },
+  {
+    label: 'Курс USD для себестоимости',
+    name: 'fxRateGoods',
+    hint: 'Коммерческий курс для стоимости товара и международной доставки.',
+    unit: '₪',
+    editable: true
+  },
+  {
+    label: 'Аграт מחשב (рыночный)',
+    name: 'computerFee',
+    hint: 'Фиксированный сбор по профилю рынка/агента.',
+    unit: '₪',
+    editable: false
+  },
+  {
+    label: 'Аграт ביטחון (рыночный)',
+    name: 'securityFee',
+    hint: 'Сбор безопасности по профилю рынка/агента.',
+    unit: '₪',
+    editable: false
+  },
+  {
+    label: 'Локальная логистика / шחרור (рыночная)',
+    name: 'localLogistics',
+    hint: 'Портовые/экспедиторские затраты, рассчитанные по рынку.',
+    unit: '₪',
+    editable: false
+  },
+  {
+    label: 'Локальная доставка порт → склад (рыночная)',
+    name: 'inlandDelivery',
+    hint: 'Считается от веса/объёма и маршрута.',
+    unit: '₪',
+    editable: false
+  },
+  {
+    label: 'Комиссия брокера (рыночная)',
+    name: 'brokerage',
+    hint: 'Считается агентом по стоимости партии и сложности оформления.',
+    unit: '₪',
+    editable: false
+  }
+];
+
+const formatDate = (value) => {
+  if (!value) {
+    return '—';
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+};
+
+export default function CustomsPanel({ values, onChange, marketCustomsInfo }) {
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 md:p-8">
+      <h3 className="text-lg font-semibold">Таможенные платежи (рыночные)</h3>
+
+      <div className="mt-4 rounded-2xl border border-brand-500/30 bg-brand-900/10 p-4 text-sm text-slate-200">
+        <p className="font-semibold">Как считается внутренняя доставка и брокер</p>
+        <p className="mt-1 text-xs text-slate-300">
+          Внутренняя доставка порт → склад рассчитывается AI-агентом из веса, объёма, страны и маршрута.
+          Комиссия брокера рассчитывается как рыночная ставка по стоимости груза + сложности оформления.
+        </p>
+        <p className="mt-2 text-xs text-slate-300">Курс USD для налоговой базы: <span className="font-semibold">{values.fxRateTax}</span> ₪ (инфо, не редактируется).</p>
+        <p className="mt-1 text-xs text-slate-400">Источник: {marketCustomsInfo?.source || 'pending'} · Обновлено: {formatDate(marketCustomsInfo?.updatedAt)}</p>
+        {marketCustomsInfo?.notes ? (
+          <p className="mt-1 text-xs text-slate-400">{marketCustomsInfo.notes}</p>
+        ) : null}
+      </div>
+
+      <div className="mt-4 grid gap-5">
+        {customsFields.map((field) => (
+          <label
+            key={field.name}
+            className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-4"
+          >
+            <span className="text-sm font-medium text-slate-200">{field.label}</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">{field.unit}</span>
+              <input
+                type="number"
+                name={field.name}
+                value={values[field.name]}
+                onChange={onChange}
+                min="0"
+                step="0.01"
+                disabled={!field.editable}
+                className="w-full bg-transparent text-lg font-semibold text-white outline-none placeholder:text-slate-600 disabled:cursor-not-allowed disabled:text-slate-400"
+              />
+            </div>
+            <span className="text-xs text-slate-500">{field.hint}</span>
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+====================================================================================================
+FILE: src/components/ResultsPanel.jsx
+====================================================================================================
+const formatCurrency = (value, currency = 'USD') =>
+  new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2
+  }).format(value);
+
+export default function ResultsPanel({ totals }) {
+  return (
+    <section className="rounded-3xl border border-brand-500/40 bg-gradient-to-br from-brand-600/20 via-slate-900/80 to-slate-950 p-6 shadow-xl shadow-brand-500/10 md:p-8">
+      <h2 className="text-xl font-semibold">Итоговая стоимость (по таблице растаможки)</h2>
+      <p className="mt-2 text-sm text-slate-300">
+        Расчёт с раздельным курсом для себестоимости и налоговой базы, как в вашей таблице.
+      </p>
+
+      <div className="mt-6 rounded-2xl border border-brand-500/30 bg-slate-950/70 p-5">
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Total</p>
+        <p className="mt-3 text-3xl font-semibold text-white">{formatCurrency(totals.totalNis, 'ILS')}</p>
+        <p className="mt-2 text-sm text-slate-400">
+          {formatCurrency(totals.perUnitNis, 'ILS')} / единицу при количестве {totals.quantity} шт.
+        </p>
+        <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-300">
+          <p className="font-medium text-white">Эквивалент в USD</p>
+          <p className="mt-1 text-lg font-semibold text-brand-100">{formatCurrency(totals.total, 'USD')}</p>
+          <p className="text-xs text-slate-500">Курс себестоимости: 1 USD = {totals.fxGoods} ₪</p>
+        </div>
+        <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-300">
+          <p className="font-medium text-white">В валюте страны назначения ({totals.destinationCountry})</p>
+          <p className="mt-1 text-lg font-semibold text-brand-100">
+            {formatCurrency(totals.totalInDestinationCurrency, totals.destinationCurrency)}
+          </p>
+          <p className="text-xs text-slate-500">Курс: 1 USD = {totals.destinationRate} {totals.destinationCurrency}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-2 text-sm text-slate-300">
+        <div className="flex items-center justify-between"><span>Цена товара, USD</span><span>{formatCurrency(totals.priceUsd, 'USD')}</span></div>
+        <div className="flex items-center justify-between"><span>Международная доставка + страхование, USD</span><span>{formatCurrency(totals.internationalUsd, 'USD')}</span></div>
+        <div className="flex items-center justify-between"><span>CIF (курс себестоимости)</span><span>{formatCurrency(totals.cifNis, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Налоговая база CIF (курс таможни)</span><span>{formatCurrency(totals.taxBaseNis, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Пошлина</span><span>{formatCurrency(totals.dutyNis, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>НДС</span><span>{formatCurrency(totals.vatNis, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Сборы (компьютер + безопасность)</span><span>{formatCurrency(totals.computerFee + totals.securityFee, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Итого таможенные платежи</span><span>{formatCurrency(totals.customsTotalNis, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Локальная логистика / шחרור</span><span>{formatCurrency(totals.localLogistics, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Локальная доставка</span><span>{formatCurrency(totals.inlandDelivery, 'ILS')}</span></div>
+        <div className="flex items-center justify-between"><span>Брокерские услуги</span><span>{formatCurrency(totals.brokerage, 'ILS')}</span></div>
+      </div>
+    </section>
+  );
+}
+
+====================================================================================================
+FILE: src/data/importData.js
+====================================================================================================
+export const COUNTRY_OPTIONS = [
+  'China',
+  'Turkey',
+  'India',
+  'UAE',
+  'Israel',
+  'Canada',
+  'USA',
+  'Germany'
+];
+
+export const PORTS_BY_COUNTRY = {
+  China: ['Shanghai', 'Ningbo', 'Shenzhen'],
+  Turkey: ['Istanbul', 'Mersin', 'Izmir'],
+  India: ['Nhava Sheva', 'Chennai', 'Mundra'],
+  UAE: ['Jebel Ali', 'Abu Dhabi', 'Sharjah'],
+  Israel: ['Haifa', 'Ashdod', 'Eilat'],
+  Canada: ['Vancouver', 'Montreal', 'Halifax'],
+  USA: ['Los Angeles', 'New York', 'Houston'],
+  Germany: ['Hamburg', 'Bremerhaven', 'Wilhelmshaven']
+};
+
+export const COUNTRIES = COUNTRY_OPTIONS;
+export const PORTS = ['Shanghai', 'Ningbo', 'Istanbul', 'Jebel Ali', 'Haifa', 'Vancouver'];
+
+export const HS_CHAPTERS = [
+  '84 — Machinery',
+  '85 — Electronics',
+  '87 — Vehicles',
+  '90 — Optical and medical instruments',
+  '61 — Knitted apparel',
+  '62 — Woven apparel'
+];
+
+export const HS_CHAPTERS_FALLBACK = [
+  '39 — Plastics',
+  '73 — Iron and steel articles',
+  '94 — Furniture',
+  '95 — Toys and games'
+];
+
+export const HS_DATABASES = [
+  {
+    name: 'Israel Customs',
+    url: 'https://shaarolami-query.customs.mof.gov.il/'
+  },
+  {
+    name: 'EU TARIC',
+    url: 'https://ec.europa.eu/taxation_customs/dds2/taric/taric_consultation.jsp?Lang=en'
+  },
+  {
+    name: 'WCO HS',
+    url: 'https://www.wcoomd.org/en/topics/nomenclature/overview/what-is-the-harmonized-system.aspx'
+  }
+];
+
+export const DESTINATION_FX = {
+  China: { currency: 'CNY', rate: 7.2 },
+  Turkey: { currency: 'TRY', rate: 32.5 },
+  India: { currency: 'INR', rate: 83.1 },
+  UAE: { currency: 'AED', rate: 3.67 },
+  Israel: { currency: 'ILS', rate: 3.65 },
+  Canada: { currency: 'CAD', rate: 1.36 },
+  USA: { currency: 'USD', rate: 1 },
+  Germany: { currency: 'EUR', rate: 0.92 }
+};
+
+export const COUNTRY_IMPORT_PROFILES = {
+  default: {
+    dutyRate: 7.5,
+    vatRate: 18,
+    brokerage: 75,
+    currency: 'USD',
+    fxRate: 1,
+    notes:
+      'Базовый профиль. Для финального оформления проверьте официальные классификаторы и локальные ставки в стране назначения.'
+  },
+  israel: {
+    dutyRate: 12,
+    vatRate: 17,
+    brokerage: 90,
+    currency: 'ILS',
+    fxRate: 3.65
+  },
+  usa: {
+    dutyRate: 4,
+    vatRate: 0,
+    brokerage: 120,
+    currency: 'USD',
+    fxRate: 1
+  },
+  germany: {
+    dutyRate: 5,
+    vatRate: 19,
+    brokerage: 95,
+    currency: 'EUR',
+    fxRate: 0.92
+  },
+  canada: {
+    dutyRate: 6,
+    vatRate: 5,
+    brokerage: 95,
+    currency: 'CAD',
+    fxRate: 1.36
+  },
+  china: {
+    dutyRate: 8,
+    vatRate: 13,
+    brokerage: 85,
+    currency: 'CNY',
+    fxRate: 7.2
+  },
+  india: {
+    dutyRate: 10,
+    vatRate: 18,
+    brokerage: 80,
+    currency: 'INR',
+    fxRate: 83.1
+  },
+  turkey: {
+    dutyRate: 8,
+    vatRate: 20,
+    brokerage: 85,
+    currency: 'TRY',
+    fxRate: 32.5
+  },
+  uae: {
+    dutyRate: 5,
+    vatRate: 5,
+    brokerage: 70,
+    currency: 'AED',
+    fxRate: 3.67
+  }
+};
+
+export const CUSTOMS_FALLBACK_GUIDE = {
+  default:
+    'Если HS-код не определён, подготовьте техописание, состав/материал, фото, назначение товара и передайте брокеру для предварительной классификации до отгрузки.',
+  Israel:
+    'Для Израиля запросите предварительное мнение по классификации (если доступно) через брокера/каналы таможни и держите готовыми: datasheet, инвойс, COO и описание назначения товара.',
+  Canada:
+    'Для Канады используйте материалы CBSA по tariff classification и подготовьте полный product brief, состав/материалы и декларацию производителя для поддержки pre-ruling.',
+  Germany:
+    'Для Германии/ЕС используйте TARIC и подготовьте состав, назначение и техописание для консультанта по таможне (при необходимости — процедура BTI).'
+};
+
+export const VAT = {
+  standardRate: 18
+};
+
+export const DUTY = {
+  standardRate: 7.5
+};
+
+export const CUSTOMS = {
+  brokerageDefault: 75
+};
+
+====================================================================================================
+FILE: src/data/hsCatalog.js
+====================================================================================================
+export const HS_CATALOG = [
+  {
+    code: '847130',
+    title: 'Портативные вычислительные машины (ноутбуки)',
+    chapter: '84',
+    keywords: ['ноутбук', 'laptop', 'computer', 'портативный компьютер', 'macbook'],
+    explanation:
+      'Переносные компьютеры массой не более 10 кг, включая как минимум ЦП, клавиатуру и дисплей.',
+    compliance: {
+      requirements: [
+        'Проверка безопасности и электромагнитной совместимости по требованиям страны импорта.',
+        'Маркировка на языке страны назначения и серийные номера на упаковке/устройстве.',
+        'Соблюдение требований по батареям/аккумуляторам (если применимо).'
+      ],
+      documents: ['Инвойс', 'Упаковочный лист', 'Сертификаты соответствия', 'Описание товара'],
+      legalReferences: ['WCO HS notes', 'Технические регламенты страны назначения'],
+      dutyByCountry: { Israel: 0, Canada: 0, Germany: 0 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
+      notes: 'Фактическая ставка зависит от преференций, происхождения и действующих торговых мер.'
+    }
+  },
+  {
+    code: '851713',
+    title: 'Смартфоны и прочие сотовые телефоны',
+    chapter: '85',
+    keywords: ['смартфон', 'телефон', 'iphone', 'android', 'mobile phone'],
+    explanation:
+      'Аппаратура для сотовых сетей или других беспроводных сетей для передачи голоса/данных.',
+    compliance: {
+      requirements: [
+        'Проверка радиочастотных требований и разрешений на использование диапазонов связи.',
+        'Соответствие стандартам безопасности зарядных устройств и аккумуляторов.',
+        'Маркировка IMEI и данных производителя.'
+      ],
+      documents: ['Инвойс', 'Упаковочный лист', 'RF/EMC документы', 'Спецификация устройства'],
+      legalReferences: ['WCO HS notes', 'Правила радиосвязи страны импорта'],
+      dutyByCountry: { Israel: 0, Canada: 0, Germany: 0 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
+      notes: 'Отдельные сборы возможны для устройств связи и утилизации электроники.'
+    }
+  },
+  {
+    code: '852872',
+    title: 'Приемники телевизионные',
+    chapter: '85',
+    keywords: ['телевизор', 'tv', 'smart tv', 'приемник тв'],
+    explanation:
+      'Телевизионные приемники, включая устройства с интегрированными модулями приема сигнала.'
+  },
+  {
+    code: '850440',
+    title: 'Статические преобразователи (зарядные устройства, блоки питания)',
+    chapter: '85',
+    keywords: ['зарядка', 'зарядное устройство', 'блок питания', 'adapter', 'charger'],
+    explanation:
+      'Электрические преобразователи для изменения параметров электрического тока.'
+  },
+  {
+    code: '940360',
+    title: 'Прочая деревянная мебель',
+    chapter: '94',
+    keywords: ['мебель', 'стол', 'шкаф', 'wood furniture', 'chair'],
+    explanation: 'Мебель из древесины, не включенная в специальные более узкие подпозиции.'
+  },
+  {
+    code: '420222',
+    title: 'Сумки с наружной поверхностью из пластмассы или текстиля',
+    chapter: '42',
+    keywords: ['сумка', 'рюкзак', 'backpack', 'bag', 'handbag'],
+    explanation:
+      'Дорожные и повседневные сумки, рюкзаки и аналогичные изделия для ношения личных вещей.'
+  },
+  {
+    code: '610910',
+    title: 'Футболки, майки и аналогичные изделия трикотажные, из хлопка',
+    chapter: '61',
+    keywords: ['футболка', 'майка', 't-shirt', 'cotton shirt'],
+    explanation: 'Трикотажные изделия верхней одежды из хлопковых волокон.'
+  },
+  {
+    code: '620462',
+    title: 'Брюки женские из хлопчатобумажной ткани',
+    chapter: '62',
+    keywords: ['брюки', 'джинсы', 'pants', 'jeans', 'женская одежда'],
+    explanation: 'Женские брюки и аналогичные изделия из текстильных материалов.'
+  },
+  {
+    code: '640399',
+    title: 'Обувь с подошвой из резины/пластмассы и верхом из кожи',
+    chapter: '64',
+    keywords: ['обувь', 'кроссовки', 'ботинки', 'shoes', 'sneakers'],
+    explanation: 'Различные типы обуви с комбинированными материалами подошвы и верха.'
+  },
+  {
+    code: '330499',
+    title: 'Прочие косметические средства для ухода за кожей',
+    chapter: '33',
+    keywords: ['косметика', 'крем', 'skin care', 'beauty', 'serum'],
+    explanation: 'Косметические и уходовые продукты, не классифицированные в более узких позициях.'
+  },
+  {
+    code: '392690',
+    title: 'Прочие изделия из пластмасс',
+    chapter: '39',
+    keywords: ['пластик', 'пластмасса', 'plastic products', 'корпус'],
+    explanation: 'Обобщающая категория для изделий из пластмасс, не поименованных отдельно.'
+  },
+  {
+    code: '950300',
+    title: 'Игрушки, модели и головоломки',
+    chapter: '95',
+    keywords: ['игрушка', 'toy', 'puzzle', 'конструктор'],
+    explanation: 'Игрушки для детей, включая наборы для сборки и моделирования.'
+  },
+  {
+    code: '851629',
+    title: 'Sauna heaters and other electric space-heating apparatus',
+    chapter: '85',
+    keywords: ['sauna', 'сауна', 'sauna heater', 'печь для сауны', 'heater'],
+    explanation:
+      'Electric heating apparatus for indoor heating applications, including sauna heater equipment depending on technical specs.',
+    compliance: {
+      requirements: [
+        'Подтвердить электрическую безопасность оборудования и соответствие стандартам страны импорта.',
+        'Проверить требования по энергоэффективности и маркировке (при наличии).',
+        'Обеспечить корректную маркировку мощности, напряжения и производителя.',
+        'Убедиться в наличии инструкции и предупреждений на языке страны назначения.',
+        'Проверить, не требуется ли отдельная сертификация для бытовых нагревательных приборов.'
+      ],
+      documents: [
+        'Коммерческий инвойс',
+        'Packing list',
+        'Технический паспорт/спецификация',
+        'Сертификаты безопасности (если требуются)',
+        'Сертификат происхождения (если применимо)'
+      ],
+      legalReferences: [
+        'WCO HS Explanatory Notes (группа 8516)',
+        'Национальные требования электробезопасности страны импорта',
+        'Таможенные правила классификации и подтверждения назначения товара'
+      ],
+      dutyByCountry: { Israel: 0, Canada: 8, Germany: 5 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
+      notes:
+        'Для Israel в этом справочнике задана пошлина 0% и НДС 18%. Финальная ставка зависит от подкатегории, происхождения товара, льготных соглашений и актуального тарифа на дату декларирования.'
+    }
+  },
+  {
+    code: '901910',
+    title: 'Massage apparatus including hydro-massage / jacuzzi systems',
+    chapter: '90',
+    keywords: ['джакузи', 'jacuzzi', 'hot tub', 'spa bath', 'гидромассаж'],
+    explanation:
+      'Аппараты для механотерапии и гидромассажных процедур; классификация зависит от технического назначения (бытовое/терапевтическое).',
+    compliance: {
+      requirements: [
+        'Проверить, подпадает ли модель под электробытовое оборудование или оборудование для терапии.',
+        'Подтвердить электробезопасность, влагозащиту и требования к подключению.',
+        'Подтвердить маркировку, язык инструкции и предупреждений для страны импорта.'
+      ],
+      documents: [
+        'Коммерческий инвойс',
+        'Packing list',
+        'Техническая спецификация и фото шильдика',
+        'Сертификаты безопасности (при наличии)'
+      ],
+      legalReferences: [
+        'WCO HS Explanatory Notes (группа 9019)',
+        'Национальные требования к электробытовому/медицинскому оборудованию'
+      ],
+      dutyByCountry: { Israel: 0, Canada: 8, Germany: 4 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
+      notes:
+        'Ориентировочная классификация для джакузи/гидромассажа. Финальный код подтверждается брокером и таможней по техописанию.'
+    }
+  },
+  {
+    code: '950699',
+    title: 'Swimming pools and other sports/leisure equipment (other)',
+    chapter: '95',
+    keywords: ['бассейн', 'swimming pool', 'pool', 'каркасный бассейн', 'надувной бассейн'],
+    explanation:
+      'Бассейны и сопутствующие изделия для спорта/досуга; точная подсубпозиция зависит от конструкции и материала.',
+    compliance: {
+      requirements: [
+        'Проверить материал и назначение (надувной, каркасный, стационарный), так как это влияет на точную классификацию.',
+        'Проверить требования по безопасности потребительских товаров и маркировке.',
+        'Указать комплектность (насос, фильтр, аксессуары) для корректного декларирования набора.'
+      ],
+      documents: [
+        'Коммерческий инвойс',
+        'Packing list',
+        'Техническое описание и материал изделия',
+        'Сертификаты/декларации безопасности (если требуются)'
+      ],
+      legalReferences: [
+        'WCO HS Explanatory Notes (группа 95)',
+        'Национальные требования к безопасности потребительских товаров'
+      ],
+      dutyByCountry: { Israel: 0, Canada: 8, Germany: 4 },
+      vatByCountry: { Israel: 18, Canada: 5, Germany: 19 },
+      notes:
+        'Ориентировочные ставки. Итог зависит от точного материала/комплекта и действующих тарифов на дату оформления.'
+    }
+  }
+];
+
+export const COUNTRY_DB_LINKS = {
+  israel: [
+    {
+      name: 'Israel Customs (Primary)',
+      url: 'https://shaarolami-query.customs.mof.gov.il/'
+    },
+    {
+      name: 'Israel Gov Customs Portal',
+      url: 'https://www.gov.il/en/departments/topics/customs/govil-landing-page'
+    }
+  ],
+  eu: [
+    {
+      name: 'EU TARIC',
+      url: 'https://ec.europa.eu/taxation_customs/dds2/taric/taric_consultation.jsp?Lang=en'
+    }
+  ],
+  global: [
+    {
+      name: 'WCO HS Nomenclature',
+      url: 'https://www.wcoomd.org/en/topics/nomenclature/overview/what-is-the-harmonized-system.aspx'
+    }
+  ]
+};
+
+====================================================================================================
+FILE: src/services/ai.js
+====================================================================================================
+import { COUNTRY_DB_LINKS, HS_CATALOG } from '../data/hsCatalog.js';
+import { COUNTRY_IMPORT_PROFILES, CUSTOMS_FALLBACK_GUIDE } from '../data/importData.js';
+
+const PRIMARY_SEARCH_URL =
+  (import.meta.env && import.meta.env.VITE_PRIMARY_HS_SEARCH_URL) ||
+  'https://api.duckduckgo.com/';
+
+const AI_AGENT_URL = (import.meta.env && import.meta.env.VITE_AI_AGENT_URL) || '';
+const AI_AGENT_KEY = (import.meta.env && import.meta.env.VITE_AI_AGENT_KEY) || '';
+
+const normalize = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[ё]/g, 'е')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const STOPWORDS = new Set(['product', 'товар', 'item', 'goods', 'products']);
+
+const tokenize = (value) =>
+  normalize(value)
+    .split(' ')
+    .filter((token) => token && token.length > 2 && !STOPWORDS.has(token));
+
+const scoreEntry = (entry, query) => {
+  const normalizedQuery = normalize(query);
+  const tokens = tokenize(query);
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  const searchable = [entry.code, entry.title, entry.explanation, ...(entry.keywords || [])]
+    .map(normalize)
+    .join(' ');
+
+  let score = 0;
+
+  const numericQuery = normalizedQuery.replace(/\D/g, '');
+  if (numericQuery && entry.code.startsWith(numericQuery)) {
+    score += 120;
+  }
+  if (searchable.includes(normalizedQuery)) {
+    score += 80;
+  }
+
+  tokens.forEach((token) => {
+    if (searchable.includes(token)) {
+      score += 20;
+    }
+  });
+
+  return score;
+};
+
+const countryAliases = {
+  us: 'usa',
+  unitedstates: 'usa',
+  'united states': 'usa',
+  de: 'germany',
+  il: 'israel',
+  ae: 'uae',
+  uae: 'uae',
+  ca: 'canada'
+};
+
+const canonicalCountry = (country) => {
+  const normalized = normalize(country);
+  return countryAliases[normalized] || normalized;
+};
+
+const getCountryProfile = (country) => {
+  const canonical = canonicalCountry(country);
+  return COUNTRY_IMPORT_PROFILES[canonical] || COUNTRY_IMPORT_PROFILES.default;
+};
+
+const getCountryLinks = (country) => {
+  const key = canonicalCountry(country);
+  if (!key) {
+    return [...COUNTRY_DB_LINKS.global];
+  }
+
+  if (['israel'].includes(key)) {
+    return [...COUNTRY_DB_LINKS.israel, ...COUNTRY_DB_LINKS.global];
+  }
+  if (['eu', 'european union', 'europe', 'germany'].includes(key)) {
+    return [...COUNTRY_DB_LINKS.eu, ...COUNTRY_DB_LINKS.global];
+  }
+
+  return [...COUNTRY_DB_LINKS.global];
+};
+
+const getFallbackGuide = (country) => {
+  return (
+    CUSTOMS_FALLBACK_GUIDE[country] ||
+    CUSTOMS_FALLBACK_GUIDE[normalize(country)] ||
+    CUSTOMS_FALLBACK_GUIDE.default
+  );
+};
+
+const rankCatalog = (query) => {
+  return HS_CATALOG
+    .map((entry) => ({
+      entry,
+      score: scoreEntry(entry, query)
+    }))
+    .filter((item) => item.score >= 40)
+    .sort((a, b) => b.score - a.score);
+};
+
+const searchFromPrimaryEngine = async (query) => {
+  try {
+    const url = `${PRIMARY_SEARCH_URL}?q=${encodeURIComponent(
+      `${query} HS code`
+    )}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const relatedText = Array.isArray(data.RelatedTopics)
+      ? data.RelatedTopics.flatMap((item) => {
+          if (item.Text) {
+            return [item.Text];
+          }
+          if (Array.isArray(item.Topics)) {
+            return item.Topics.map((topic) => topic.Text).filter(Boolean);
+          }
+          return [];
+        })
+      : [];
+
+    const sourceText = [data.AbstractText, data.Heading, ...relatedText]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (!sourceText) {
+      return null;
+    }
+
+    return sourceText;
+  } catch {
+    return null;
+  }
+};
+
+const parseAgentResponse = (data, fallbackResult, destinationCountry) => {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const estimatedDutyRate = Number.parseFloat(data.estimatedDutyRate);
+  const estimatedVatRate = Number.parseFloat(data.estimatedVatRate);
+
+  return {
+    code: data.hsCode || fallbackResult?.code || '',
+    title: data.title || fallbackResult?.title || 'AI estimated classification',
+    explanation: data.reasoning || fallbackResult?.explanation || '',
+    source: 'ai-agent',
+    confidence: Number.isFinite(Number.parseFloat(data.confidence))
+      ? Math.min(0.99, Number.parseFloat(data.confidence))
+      : 0.55,
+    compliance: {
+      requirements: Array.isArray(data.requirements) ? data.requirements : [],
+      documents: Array.isArray(data.documents) ? data.documents : [],
+      legalReferences: Array.isArray(data.legalReferences) ? data.legalReferences : [],
+      dutyByCountry: {
+        [destinationCountry]: Number.isFinite(estimatedDutyRate)
+          ? Number(estimatedDutyRate.toFixed(2))
+          : null
+      },
+      vatByCountry: {
+        [destinationCountry]: Number.isFinite(estimatedVatRate)
+          ? Number(estimatedVatRate.toFixed(2))
+          : null
+      },
+      notes:
+        data.notes ||
+        'AI-оценка ориентировочная. Перед декларированием подтвердите HS-код у брокера или в таможенном органе.'
+    }
+  };
+};
+
+const requestAiAgent = async ({ query, country, fallbackResult }) => {
+  if (!AI_AGENT_URL) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(AI_AGENT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(AI_AGENT_KEY ? { Authorization: `Bearer ${AI_AGENT_KEY}` } : {})
+      },
+      body: JSON.stringify({
+        task: 'import_customs_estimation',
+        query,
+        destinationCountry: country,
+        fallbackHsCode: fallbackResult?.code || null,
+        fallbackTitle: fallbackResult?.title || null
+      })
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return parseAgentResponse(data, fallbackResult, country);
+  } catch {
+    return null;
+  }
+};
+
+export const searchHsCode = async ({ query, country }) => {
+  const normalizedQuery = normalize(query);
+  if (!normalizedQuery) {
+    return {
+      query,
+      country,
+      result: null,
+      alternatives: [],
+      links: getCountryLinks(country),
+      legalGuidance: getFallbackGuide(country),
+      searchSource: 'empty',
+      countryProfile: getCountryProfile(country)
+    };
+  }
+
+  const webSnippet = await searchFromPrimaryEngine(normalizedQuery);
+  const rankedFromWeb = webSnippet ? rankCatalog(`${normalizedQuery} ${webSnippet}`) : [];
+  const rankedLocal = rankCatalog(normalizedQuery);
+  const ranked = rankedFromWeb.length > 0 ? rankedFromWeb : rankedLocal;
+
+  const [best, ...rest] = ranked;
+  const fallbackResult = best
+    ? {
+        ...best.entry,
+        source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
+        confidence: Math.min(0.99, Number((best.score / 140).toFixed(2)))
+      }
+    : null;
+
+  const aiResult = await requestAiAgent({ query: normalizedQuery, country, fallbackResult });
+  const result = aiResult || fallbackResult;
+
+  return {
+    query,
+    country,
+    result,
+    alternatives: rest.slice(0, 3).map((item) => ({
+      ...item.entry,
+      source: rankedFromWeb.length > 0 ? 'primary-search' : 'catalog',
+      confidence: Math.min(0.99, Number((item.score / 140).toFixed(2)))
+    })),
+    links: getCountryLinks(country),
+    legalGuidance: getFallbackGuide(country),
+    searchSource: aiResult
+      ? 'ai-agent'
+      : rankedFromWeb.length > 0
+        ? 'primary-search'
+        : 'catalog-fallback',
+    countryProfile: getCountryProfile(country)
+  };
+};
+
+
+const toFinite = (value, fallback = 0) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const fallbackMarketCustoms = ({ destinationCountry, weightKg, volumeCbm, priceUsd }) => {
+  const profile = getCountryProfile(destinationCountry);
+  const weight = Math.max(0, toFinite(weightKg));
+  const volume = Math.max(0, toFinite(volumeCbm));
+  const price = Math.max(0, toFinite(priceUsd));
+  const handlingUnits = Math.max(1, Math.ceil(Math.max(weight / 120, volume / 1.5)));
+
+  return {
+    dutyRate: profile.dutyRate,
+    vatRate: profile.vatRate,
+    fxTax: Number((profile.fxRate * 1.08).toFixed(4)),
+    computerFee: Number((32 + handlingUnits * 6).toFixed(2)),
+    securityFee: Number((38 + handlingUnits * 5).toFixed(2)),
+    localLogistics: Number((1800 + weight * 1.9 + volume * 420).toFixed(2)),
+    inlandDelivery: Number((380 + weight * 0.65 + volume * 120).toFixed(2)),
+    brokerage: Number((290 + price * 0.012).toFixed(2)),
+    source: 'fallback-model',
+    updatedAt: new Date().toISOString(),
+    notes:
+      'Fallback-модель на основе веса/объёма/стоимости. Для точной ставки используйте AI-агент и подтверждение от брокера.'
+  };
+};
+
+export const getMarketCustomsProfile = async ({
+  destinationCountry,
+  originCountry,
+  productName,
+  weightKg,
+  volumeCbm,
+  priceUsd,
+  hsCode
+}) => {
+  const fallback = fallbackMarketCustoms({ destinationCountry, weightKg, volumeCbm, priceUsd });
+
+  if (!AI_AGENT_URL) {
+    return fallback;
+  }
+
+  try {
+    const response = await fetch(AI_AGENT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(AI_AGENT_KEY ? { Authorization: `Bearer ${AI_AGENT_KEY}` } : {})
+      },
+      body: JSON.stringify({
+        task: 'market_customs_inputs',
+        destinationCountry,
+        originCountry,
+        productName,
+        hsCode,
+        weightKg,
+        volumeCbm,
+        priceUsd
+      })
+    });
+
+    if (!response.ok) {
+      return fallback;
+    }
+
+    const data = await response.json();
+
+    return {
+      dutyRate: toFinite(data.dutyRate, fallback.dutyRate),
+      vatRate: toFinite(data.vatRate, fallback.vatRate),
+      fxTax: toFinite(data.fxTax, fallback.fxTax),
+      computerFee: toFinite(data.computerFee, fallback.computerFee),
+      securityFee: toFinite(data.securityFee, fallback.securityFee),
+      localLogistics: toFinite(data.localLogistics, fallback.localLogistics),
+      inlandDelivery: toFinite(data.inlandDelivery, fallback.inlandDelivery),
+      brokerage: toFinite(data.brokerage, fallback.brokerage),
+      source: 'ai-agent',
+      updatedAt: data.updatedAt || new Date().toISOString(),
+      notes:
+        data.notes ||
+        'Оценка на основе AI-агента и рыночных данных. Подтверждайте финальные сборы у таможенного брокера.'
+    };
+  } catch {
+    return fallback;
+  }
+};
+
