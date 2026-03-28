@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import Cost Calculator — One File</title>
+  <style>
+    body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:#020617;color:#e2e8f0}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .card{background:#0f172acc;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-bottom:16px}
+    h1,h2{margin:0 0 12px}
+    .grid{display:grid;gap:12px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    input,select{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #334155;background:#0b1226;color:#f8fafc}
+    input[readonly]{background:#0f1f3a;color:#64748b;cursor:not-allowed}
+    label{font-size:12px;color:#94a3b8;display:grid;gap:6px}
+    .muted{color:#94a3b8;font-size:12px}
+    table{width:100%;border-collapse:collapse}
+    td{padding:8px;border-bottom:1px solid #1e293b}
+    td:last-child{text-align:right;font-weight:600}
+    .big{font-size:30px;font-weight:700}
+    .loading{color:#6366f1;font-size:12px;margin-top:4px}
+    @media (max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Import Cost Calculator (one file)</h1>
+  <p class="muted">Один файл для переноса на любую платформу.</p>
+
+  <div class="card grid g3">
+    <label>Товар<input id="productName" value="notebook" /></label>
+    <label>Страна отправления<input id="countryFrom" value="China" /></label>
+    <label>Страна назначения<input id="countryTo" value="Israel" /></label>
+    <label>Цена товара, USD<input id="price" type="number" value="2200" /></label>
+    <label>Количество<input id="quantity" type="number" step="1" value="1" /></label>
+    <label>Курс USD (себестоимость, ₪)<input id="fxGoods" type="number" step="0.0001" value="3.12" /></label>
+    <label>Вес, кг<input id="weight" type="number" step="0.01" value="180" /></label>
+    <label>Объём, м³<input id="volume" type="number" step="0.01" value="1.4" /></label>
+    <label>Тип доставки
+      <select id="deliveryMode"><option value="sea">Морем</option><option value="air">Воздухом</option><option value="land">Сухопутно</option></select>
+    </label>
+    <label>Режим доставки
+      <select id="shippingMode"><option value="calculate">Авторасчёт</option><option value="manual">Вручную</option></select>
+    </label>
+    <label>Международная доставка, USD<input id="shipping" type="number" value="613" /></label>
+    <label>Страхование, USD<input id="insurance" type="number" value="0" /></label>
+  </div>
+
+  <div class="card">
+    <h2>Рыночные данные растаможки (AI/fallback)</h2>
+    <p class="loading" id="loadingIndicator" style="display:none">Загрузка данных...</p>
+    <p class="muted" id="marketInfo"></p>
+    <div class="grid g3">
+      <label>Пошлина, %<input id="dutyRate" type="number" /></label>
+      <label>НДС, %<input id="vatRate" type="number" /></label>
+      <label>Курс USD для налоговой базы, ₪<input id="fxTax" type="number" step="0.0001" /></label>
+      <label>Аграт מחשב, ₪<input id="computerFee" type="number" /></label>
+      <label>Аграт ביטחון, ₪<input id="securityFee" type="number" /></label>
+      <label>Локальная логистика, ₪<input id="localLogistics" type="number" /></label>
+      <label>Внутренняя доставка порт→склад, ₪<input id="inlandDelivery" type="number" /></label>
+      <label>Комиссия брокера, ₪<input id="brokerage" type="number" /></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Итоги</h2>
+    <div class="big" id="totalNis">₪0.00</div>
+    <div class="muted" id="totalUsd">$0.00</div>
+    <table>
+      <tr><td>CIF (₪)</td><td id="cifNis"></td></tr>
+      <tr><td>База для налогов (₪)</td><td id="taxBaseNis"></td></tr>
+      <tr><td>Пошлина (₪)</td><td id="dutyNis"></td></tr>
+      <tr><td>НДС (₪)</td><td id="vatNis"></td></tr>
+      <tr><td>Таможенные платежи (₪)</td><td id="customsTotal"></td></tr>
+      <tr><td>Локальная логистика (₪)</td><td id="localLogisticsRow"></td></tr>
+      <tr><td>Внутренняя доставка (₪)</td><td id="inlandDeliveryRow"></td></tr>
+      <tr><td>Комиссия брокера (₪)</td><td id="brokerageRow"></td></tr>
+      <tr><td>Себестоимость на единицу (₪)</td><td id="perUnit"></td></tr>
+    </table>
+  </div>
+</div>
+
+<script>
+const AI_URL = '';
+const AI_KEY = '';
+
+const els = Object.fromEntries(
+  [...document.querySelectorAll('input,select')].map(el => [el.id, el])
+);
+
+const num = (id) => {
+  const v = Number.parseFloat(els[id]?.value);
+  return Number.isNaN(v) || v < 0 ? 0 : v;
+};
+
+const fmt = (v, c = 'ILS') =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: c }).format(v || 0);
+
+const routeFactor = () => {
+  const f = (els.countryFrom.value || '').toLowerCase().trim();
+  const t = (els.countryTo.value || '').toLowerCase().trim();
+  if (!f || !t) return 1;
+  if (f === t) return 0.35;
+  const region = { china:'asia', india:'asia', uae:'me', israel:'me', turkey:'eu', germany:'eu', usa:'na', canada:'na' };
+  return region[f] && region[t] && region[f] === region[t] ? 0.8 : 1.18;
+};
+
+const shippingEstimate = () => {
+  const mode = els.deliveryMode.value;
+  const vol = num('volume');
+  const wt = num('weight');
+  const rf = routeFactor();
+  let base = 0;
+  if (mode === 'sea') {
+    const cbm = vol > 0 ? vol : Math.max(0.1, wt / 350);
+    base = Math.max(220, cbm * 115);
+  } else if (mode === 'air') {
+    const ch = Math.max(wt, vol * 167, 1);
+    base = Math.max(160, ch * 6.8);
+  } else {
+    base = Math.max(140, Math.max(wt * 1.15, vol * 78));
+  }
+  return base * rf;
+};
+
+const fallbackCustoms = () => {
+  const wt = num('weight'), vol = num('volume'), price = num('price');
+  const handling = Math.max(1, Math.ceil(Math.max(wt / 120, vol / 1.5)));
+  const fxGoods = Math.max(0.0001, num('fxGoods'));
+  return {
+    dutyRate: 0,
+    vatRate: 18,
+    fxTax: Number(fxGoods.toFixed(4)),
+    computerFee: Number((32 + handling * 6).toFixed(2)),
+    securityFee: Number((38 + handling * 5).toFixed(2)),
+    localLogistics: Number((1800 + wt * 1.9 + vol * 420).toFixed(2)),
+    inlandDelivery: Number((380 + wt * 0.65 + vol * 120).toFixed(2)),
+    brokerage: Number((290 + price * 0.012).toFixed(2)),
+    source: 'fallback-model'
+  };
+};
+
+async function fetchMarketCustoms() {
+  const fallback = fallbackCustoms();
+  if (!AI_URL) return fallback;
+  try {
+    const res = await fetch(AI_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(AI_KEY ? { Authorization: `Bearer ${AI_KEY}` } : {})
+      },
+      body: JSON.stringify({
+        task: 'market_customs_inputs',
+        destinationCountry: els.countryTo.value,
+        originCountry: els.countryFrom.value,
+        productName: els.productName.value,
+        weightKg: num('weight'),
+        volumeCbm: num('volume'),
+        priceUsd: num('price')
+      })
+    });
+    if (!res.ok) return fallback;
+    const d = await res.json();
+    return {
+      dutyRate: +d.dutyRate || fallback.dutyRate,
+      vatRate: +d.vatRate || fallback.vatRate,
+      fxTax: +d.fxTax || fallback.fxTax,
+      computerFee: +d.computerFee || fallback.computerFee,
+      securityFee: +d.securityFee || fallback.securityFee,
+      localLogistics: +d.localLogistics || fallback.localLogistics,
+      inlandDelivery: +d.inlandDelivery || fallback.inlandDelivery,
+      brokerage: +d.brokerage || fallback.brokerage,
+      source: 'ai-agent'
+    };
+  } catch { return fallback; }
+}
+
+let recalcTimer = null;
+let recalcVersion = 0;
+
+const CUSTOMS_FIELDS = ['dutyRate', 'vatRate', 'fxTax', 'computerFee', 'securityFee', 'localLogistics', 'inlandDelivery', 'brokerage'];
+const userEdited = new Set();
+CUSTOMS_FIELDS.forEach(id => {
+  els[id].addEventListener('input', () => userEdited.add(id));
+});
+
+async function recalc() {
+  const version = ++recalcVersion;
+  document.getElementById('loadingIndicator').style.display = 'inline';
+  const customs = await fetchMarketCustoms();
+  if (version !== recalcVersion) return;
+  Object.entries(customs).forEach(([k, v]) => {
+    if (els[k] && !userEdited.has(k)) els[k].value = v;
+  });
+  document.getElementById('loadingIndicator').style.display = 'none';
+  document.getElementById('marketInfo').textContent =
+    `Источник: ${customs.source}. Внутренняя доставка и брокер рассчитаны рыночно по весу/объёму/стоимости.`;
+  const isAutoShipping = els.shippingMode.value === 'calculate';
+  const shipping = isAutoShipping ? shippingEstimate() : num('shipping');
+  els.shipping.readOnly = isAutoShipping;
+  if (isAutoShipping) els.shipping.value = shipping.toFixed(2);
+  const ins = num('insurance');
+  const fxGoods = Math.max(0.0001, num('fxGoods'));
+  const fxTax = Math.max(0.0001, num('fxTax'));
+  const dutyRate = num('dutyRate') / 100;
+  const vatRate = num('vatRate') / 100;
+  const qty = Math.max(1, num('quantity'));
+  const internationalUsd = shipping + ins;
+  const cifNis = (num('price') + internationalUsd) * fxGoods;
+  const taxBaseNis = (num('price') + internationalUsd) * fxTax;
+  const dutyNis = taxBaseNis * dutyRate;
+  const vatNis = (taxBaseNis + dutyNis) * vatRate;
+  const customsTotal = dutyNis + vatNis + num('computerFee') + num('securityFee');
+  const totalNis = cifNis + customsTotal + num('localLogistics') + num('inlandDelivery') + num('brokerage');
+  const totalUsd = totalNis / fxGoods;
+  document.getElementById('totalNis').textContent = fmt(totalNis, 'ILS');
+  document.getElementById('totalUsd').textContent = fmt(totalUsd, 'USD');
+  document.getElementById('cifNis').textContent = fmt(cifNis, 'ILS');
+  document.getElementById('taxBaseNis').textContent = fmt(taxBaseNis, 'ILS');
+  document.getElementById('dutyNis').textContent = fmt(dutyNis, 'ILS');
+  document.getElementById('vatNis').textContent = fmt(vatNis, 'ILS');
+  document.getElementById('customsTotal').textContent = fmt(customsTotal, 'ILS');
+  document.getElementById('localLogisticsRow').textContent = fmt(num('localLogistics'), 'ILS');
+  document.getElementById('inlandDeliveryRow').textContent = fmt(num('inlandDelivery'), 'ILS');
+  document.getElementById('brokerageRow').textContent = fmt(num('brokerage'), 'ILS');
+  document.getElementById('perUnit').textContent = fmt(totalNis / qty, 'ILS');
+}
+
+function scheduleRecalc() {
+  clearTimeout(recalcTimer);
+  recalcTimer = setTimeout(recalc, 300);
+}
+
+Object.values(els).forEach(el => el.addEventListener('input', scheduleRecalc));
+recalc();
+</script>
+</body>
+</html>
