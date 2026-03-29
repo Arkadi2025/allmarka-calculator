@@ -226,10 +226,19 @@ const PORTS = {
   'South Korea': { sea:['Busan','Incheon','Gwangyang'],                                        air:['Seoul Incheon (ICN)','Busan (PUS)'],                                         land:['—'] },
   Japan:         { sea:['Tokyo / Yokohama','Osaka / Kobe','Nagoya'],                           air:['Tokyo Narita (NRT)','Osaka Kansai (KIX)','Nagoya (NGO)'],                    land:['—'] },
   Israel:        { sea:['Haifa','Ashdod'],                                                      air:['Ben Gurion (TLV)'],                                                          land:['Haifa','Ashdod','Allenby Bridge','Nitzana'] },
+  Russia:        { sea:['St. Petersburg','Novorossiysk','Vladivostok'],                         air:['Moscow Sheremetyevo (SVO)','Moscow Domodedovo (DME)','St. Petersburg (LED)'], land:['Moscow','Yekaterinburg','Novosibirsk'] },
+  Australia:     { sea:['Sydney','Melbourne','Brisbane','Fremantle'],                           air:['Sydney (SYD)','Melbourne (MEL)','Brisbane (BNE)'],                           land:['—'] },
+  Kazakhstan:    { sea:['Aktau (Caspian)'],                                                     air:['Almaty (ALA)','Astana (NQZ)'],                                               land:['Khorgos','Dostyk'] },
+  Poland:        { sea:['Gdansk','Gdynia'],                                                     air:['Warsaw (WAW)','Krakow (KRK)'],                                               land:['Warsaw border'] },
+  'Czech Republic':{ sea:['—'],                                                                 air:['Prague (PRG)'],                                                              land:['Prague border'] },
+  Austria:       { sea:['—'],                                                                   air:['Vienna (VIE)'],                                                              land:['Vienna border'] },
+  Switzerland:   { sea:['—'],                                                                   air:['Zurich (ZRH)','Geneva (GVA)'],                                               land:['Basel border'] },
+  Mexico:        { sea:['Manzanillo','Veracruz','Lazaro Cardenas'],                             air:['Mexico City (MEX)','Guadalajara (GDL)'],                                     land:['Nuevo Laredo','Tijuana'] },
+  Brazil:        { sea:['Santos','Rio de Janeiro','Paranagua'],                                 air:['Sao Paulo Guarulhos (GRU)','Rio de Janeiro (GIG)'],                          land:['Foz do Iguacu'] },
 };
 
-const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => c !== 'Israel');
-const DEST_COUNTRIES   = ['Israel'];
+const DEST_COUNTRIES = ['Israel','USA','Canada','Russia','Germany','Netherlands','UK','France','Australia','UAE','Turkey','Brazil','Mexico','Kazakhstan'];
+const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => !DEST_COUNTRIES.includes(c) || true); // all countries can be origin
 
 // ── STATE ─────────────────────────────────────────────────────
 let transport   = 'sea';
