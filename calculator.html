@@ -1,240 +1,491 @@
-Bash
-cat /home/user/allmarka-calculator/calculator.html
 <!doctype html>
-<html lang="ru">
+<html lang="ru" dir="ltr">
 <head>
-Show less
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Import Cost Calculator — One File</title>
+  <title>Import Cost Calculator</title>
   <style>
+    *{box-sizing:border-box}
     body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:#020617;color:#e2e8f0}
     .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    .card{background:#0f172acc;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-bottom:16px}
-    h1,h2{margin:0 0 12px}
+    .card{background:#0f172acc;border:1px solid #1e293b;border-radius:16px;padding:20px;margin-bottom:16px}
+    h1{margin:0 0 4px;font-size:22px}
     .grid{display:grid;gap:12px}
     .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
     .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    input,select{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #334155;background:#0b1226;color:#f8fafc}
+    .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0b1226;color:#f8fafc;font-size:14px;outline:none;transition:border-color .15s}
+    input:focus,select:focus{border-color:#6366f1}
     input[readonly]{background:#0f1f3a;color:#64748b;cursor:not-allowed}
     label{font-size:12px;color:#94a3b8;display:grid;gap:6px}
-    .muted{color:#94a3b8;font-size:12px}
-    table{width:100%;border-collapse:collapse}
-    td{padding:8px;border-bottom:1px solid #1e293b}
-    td:last-child{text-align:right;font-weight:600}
-    .big{font-size:30px;font-weight:700}
+    .muted{color:#94a3b8;font-size:12px;margin:4px 0 0}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    td{padding:9px 6px;border-bottom:1px solid #1e293b;font-size:14px}
+    td:last-child{text-align:right;font-weight:600;color:#f1f5f9}
+    .big{font-size:32px;font-weight:700;color:#f1f5f9}
+    .sub{font-size:14px;color:#94a3b8;margin-top:2px}
     .loading{color:#6366f1;font-size:12px;margin-top:4px}
-    @media (max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+    .header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .lang-bar{display:flex;gap:6px;flex-shrink:0;margin-top:4px}
+    .lang-bar button{padding:5px 14px;border-radius:8px;border:1px solid #334155;background:#0b1226;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+    .lang-bar button.active{background:#6366f1;border-color:#6366f1;color:#fff}
+    .transport-bar{display:flex;gap:8px;margin-bottom:14px}
+    .transport-bar button{flex:1;padding:9px;border-radius:10px;border:1px solid #334155;background:#0b1226;color:#94a3b8;font-size:13px;cursor:pointer;transition:all .15s}
+    .transport-bar button.active{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd;font-weight:600}
+    .sec-title{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+    .divider{border:none;border-top:1px solid #1e293b;margin:14px 0}
+    .auto-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .auto-row input{width:auto;accent-color:#6366f1}
+    .auto-row label{font-size:13px;color:#94a3b8;display:inline}
+    @media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}.header-row{flex-direction:column}}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Import Cost Calculator (one file)</h1>
-  <p class="muted">Один файл для переноса на любую платформу.</p>
-  <div class="card grid g3">
-    <label>Товар<input id="productName" value="notebook" /></label>
-    <label>Страна отправления<input id="countryFrom" value="China" /></label>
-    <label>Страна назначения<input id="countryTo" value="Israel" /></label>
-    <label>Цена товара, USD<input id="price" type="number" value="2200" /></label>
-    <label>Количество<input id="quantity" type="number" step="1" value="1" /></label>
-    <label>Курс USD (себестоимость, ₪)<input id="fxGoods" type="number" step="0.0001" value="3.12" /></label>
-    <label>Вес, кг<input id="weight" type="number" step="0.01" value="180" /></label>
-    <label>Объём, м³<input id="volume" type="number" step="0.01" value="1.4" /></label>
-    <label>Тип доставки
-      <select id="deliveryMode"><option value="sea">Морем</option><option value="air">Воздухом</option><option value="land">Сухопутно</option></select>
-    </label>
-    <label>Режим доставки
-      <select id="shippingMode"><option value="calculate">Авторасчёт</option><option value="manual">Вручную</option></select>
-    </label>
-    <label>Международная доставка, USD<input id="shipping" type="number" value="613" /></label>
-    <label>Страхование, USD<input id="insurance" type="number" value="0" /></label>
-  </div>
-  <div class="card">
-    <h2>Рыночные данные растаможки (AI/fallback)</h2>
-    <!-- Fix #8: loading indicator -->
-    <p class="loading" id="loadingIndicator" style="display:none">Загрузка данных...</p>
-    <p class="muted" id="marketInfo"></p>
-    <!-- Fix #3: все поля редактируемые, disabled убран -->
-    <div class="grid g3">
-      <label>Пошлина, %<input id="dutyRate" type="number" /></label>
-      <label>НДС, %<input id="vatRate" type="number" /></label>
-      <label>Курс USD для налоговой базы, ₪<input id="fxTax" type="number" step="0.0001" /></label>
-      <label>Аграт מחשב, ₪<input id="computerFee" type="number" /></label>
-      <label>Аграт ביטחון, ₪<input id="securityFee" type="number" /></label>
-      <label>Локальная логистика, ₪<input id="localLogistics" type="number" /></label>
-      <label>Внутренняя доставка порт→склад, ₪<input id="inlandDelivery" type="number" /></label>
-      <label>Комиссия брокера, ₪<input id="brokerage" type="number" /></label>
+
+<<<<<<< HEAD
+=======
+  <!-- Header -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  <div class="header-row">
+    <div>
+      <h1 id="t-title">Калькулятор стоимости импорта</h1>
+      <p class="muted" id="t-subtitle">Израиль · Полная себестоимость с таможней</p>
+    </div>
+    <div class="lang-bar">
+      <button onclick="setLang('ru')" id="btn-ru" class="active">RU</button>
+      <button onclick="setLang('en')" id="btn-en">EN</button>
+      <button onclick="setLang('he')" id="btn-he">עב</button>
     </div>
   </div>
+
+<<<<<<< HEAD
+=======
+  <!-- Product -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="card">
-    <h2>Итоги</h2>
+    <div class="sec-title" id="t-sec-product">Товар</div>
+    <div class="grid g3">
+      <label id="l-productName">Название товара<input id="productName" type="text" value="Ноутбук" /></label>
+      <label id="l-price">Цена товара, USD<input id="price" type="number" value="2200" min="0" step="0.01" /></label>
+      <label id="l-quantity">Количество, шт<input id="quantity" type="number" value="1" min="1" step="1" /></label>
+    </div>
+  </div>
+
+<<<<<<< HEAD
+=======
+  <!-- Route -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  <div class="card">
+    <div class="sec-title" id="t-sec-route">Маршрут</div>
+    <div class="transport-bar">
+      <button id="tb-sea" class="active" onclick="setTransport('sea')">🚢 <span id="t-sea">Море</span></button>
+      <button id="tb-air" onclick="setTransport('air')">✈️ <span id="t-air">Воздух</span></button>
+      <button id="tb-land" onclick="setTransport('land')">🚛 <span id="t-land">Суша</span></button>
+    </div>
+    <div class="grid g2" style="margin-bottom:12px">
+      <label id="l-countryFrom">Страна отправления<select id="countryFrom" onchange="onCountryChange()"></select></label>
+      <label id="l-countryTo">Страна назначения<select id="countryTo" onchange="onCountryChange()"></select></label>
+    </div>
+    <div class="grid g2">
+      <label id="l-portFrom">Порт / аэропорт отправления<select id="portFrom" onchange="scheduleRecalc()"></select></label>
+      <label id="l-portTo">Порт / аэропорт назначения<select id="portTo" onchange="scheduleRecalc()"></select></label>
+    </div>
+  </div>
+
+<<<<<<< HEAD
+=======
+  <!-- Cargo -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  <div class="card">
+    <div class="sec-title" id="t-sec-cargo">Груз и доставка</div>
+    <div class="grid g4">
+      <label id="l-weight">Вес, кг<input id="weight" type="number" value="180" min="0" step="0.01" /></label>
+      <label id="l-volume">Объём, м³<input id="volume" type="number" value="1.4" min="0" step="0.01" /></label>
+      <label id="l-shipping">Доставка, USD<input id="shipping" type="number" value="613" min="0" step="0.01" /></label>
+      <label id="l-insurance">Страхование, USD<input id="insurance" type="number" value="0" min="0" step="0.01" /></label>
+    </div>
+    <div class="auto-row">
+      <input type="checkbox" id="autoShipping" checked onchange="scheduleRecalc()" />
+      <label for="autoShipping" id="l-autoShipping">Рассчитать доставку автоматически</label>
+    </div>
+  </div>
+
+<<<<<<< HEAD
+=======
+  <!-- Customs -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  <div class="card">
+    <div class="sec-title" id="t-sec-customs">Таможня и налоги</div>
+    <p class="loading" id="loadingIndicator" style="display:none">Загрузка данных...</p>
+    <p class="muted" id="marketInfo"></p>
+    <div class="grid g4" style="margin-top:10px">
+      <label id="l-fxGoods">Курс USD (себест.), ₪<input id="fxGoods" type="number" step="0.0001" value="3.65" /></label>
+      <label id="l-fxTax">Курс USD (таможня), ₪<input id="fxTax" type="number" step="0.0001" value="3.65" /></label>
+      <label id="l-dutyRate">Пошлина, %<input id="dutyRate" type="number" step="0.1" /></label>
+      <label id="l-vatRate">НДС, %<input id="vatRate" type="number" step="0.1" /></label>
+    </div>
+    <hr class="divider" />
+    <div class="grid g4">
+      <label id="l-computerFee">Агрот מחשב, ₪<input id="computerFee" type="number" /></label>
+      <label id="l-securityFee">Агрот ביטחון, ₪<input id="securityFee" type="number" /></label>
+      <label id="l-brokerage">Брокер, ₪<input id="brokerage" type="number" /></label>
+      <label id="l-localLogistics">Лог. порт→склад, ₪<input id="localLogistics" type="number" /></label>
+    </div>
+  </div>
+
+<<<<<<< HEAD
+=======
+  <!-- Results -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  <div class="card">
+    <div class="sec-title" id="t-sec-results">Итого</div>
     <div class="big" id="totalNis">₪0.00</div>
-    <div class="muted" id="totalUsd">$0.00</div>
+    <div class="sub" id="totalUsd">$0.00</div>
     <table>
-      <tr><td>CIF (₪)</td><td id="cifNis"></td></tr>
-      <tr><td>База для налогов (₪)</td><td id="taxBaseNis"></td></tr>
-      <tr><td>Пошлина (₪)</td><td id="dutyNis"></td></tr>
-      <tr><td>НДС (₪)</td><td id="vatNis"></td></tr>
-      <tr><td>Таможенные платежи (₪)</td><td id="customsTotal"></td></tr>
-      <tr><td>Локальная логистика (₪)</td><td id="localLogisticsRow"></td></tr>
-      <tr><td>Внутренняя доставка (₪)</td><td id="inlandDeliveryRow"></td></tr>
-      <tr><td>Комиссия брокера (₪)</td><td id="brokerageRow"></td></tr>
-      <tr><td>Себестоимость на единицу (₪)</td><td id="perUnit"></td></tr>
+      <tr><td id="t-r-cif">CIF (₪)</td><td id="cifNis"></td></tr>
+      <tr><td id="t-r-taxbase">База для налогов (₪)</td><td id="taxBaseNis"></td></tr>
+      <tr><td id="t-r-duty">Пошлина (₪)</td><td id="dutyNis"></td></tr>
+      <tr><td id="t-r-vat">НДС (₪)</td><td id="vatNis"></td></tr>
+      <tr><td id="t-r-customs">Таможенные платежи (₪)</td><td id="customsTotal"></td></tr>
+      <tr><td id="t-r-logistics">Логистика порт→склад (₪)</td><td id="localLogisticsRow"></td></tr>
+      <tr><td id="t-r-broker">Брокер (₪)</td><td id="brokerageRow"></td></tr>
+      <tr><td id="t-r-perunit">Себестоимость / ед. (₪)</td><td id="perUnit"></td></tr>
     </table>
   </div>
+
 </div>
 <script>
-const AI_URL = '';
-const AI_KEY = '';
-const els = Object.fromEntries(
-  [...document.querySelectorAll('input,select')].map(el => [el.id, el])
-);
-// Fix #1: num() returns 0 for NaN or invalid input instead of propagating NaN
-const num = (id) => {
-  const v = Number.parseFloat(els[id]?.value);
-  return Number.isNaN(v) || v < 0 ? 0 : v;
-};
-const fmt = (v, c = 'ILS') =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: c }).format(v || 0);
-const routeFactor = () => {
-  const f = (els.countryFrom.value || '').toLowerCase().trim();
-  const t = (els.countryTo.value || '').toLowerCase().trim();
-  if (!f || !t) return 1;
-  if (f === t) return 0.35;
-  const region = { china:'asia', india:'asia', uae:'me', israel:'me', turkey:'eu', germany:'eu', usa:'na', canada:'na' };
-  return region[f] && region[t] && region[f] === region[t] ? 0.8 : 1.18;
-};
-// Fix #5: removed time-based marketFactor() — estimates are now deterministic
-const shippingEstimate = () => {
-  const mode = els.deliveryMode.value;
-  const vol = num('volume');
-  const wt = num('weight');
-  const rf = routeFactor();
-  let base = 0;
-  if (mode === 'sea') {
-    const cbm = vol > 0 ? vol : Math.max(0.1, wt / 350);
-    base = Math.max(220, cbm * 115);
-  } else if (mode === 'air') {
-    const ch = Math.max(wt, vol * 167, 1);
-    base = Math.max(160, ch * 6.8);
-  } else {
-    base = Math.max(140, Math.max(wt * 1.15, vol * 78));
+<<<<<<< HEAD
+=======
+// ── TRANSLATIONS ──────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+const LANG = {
+  ru: {
+    dir:'ltr',
+    't-title':'Калькулятор стоимости импорта',
+    't-subtitle':'Израиль · Полная себестоимость с таможней',
+    't-sec-product':'Товар','t-sec-route':'Маршрут','t-sec-cargo':'Груз и доставка',
+    't-sec-customs':'Таможня и налоги','t-sec-results':'Итого',
+    't-sea':'Море','t-air':'Воздух','t-land':'Суша',
+    'l-productName':'Название товара','l-price':'Цена товара, USD','l-quantity':'Количество, шт',
+    'l-countryFrom':'Страна отправления','l-countryTo':'Страна назначения',
+    'l-portFrom':'Порт / аэропорт отправления','l-portTo':'Порт / аэропорт назначения',
+    'l-weight':'Вес, кг','l-volume':'Объём, м³','l-shipping':'Доставка, USD','l-insurance':'Страхование, USD',
+    'l-autoShipping':'Рассчитать доставку автоматически',
+    'l-fxGoods':'Курс USD (себест.), ₪','l-fxTax':'Курс USD (таможня), ₪',
+    'l-dutyRate':'Пошлина, %','l-vatRate':'НДС, %',
+    'l-computerFee':'Агрот מחשב, ₪','l-securityFee':'Агрот ביטחון, ₪',
+    'l-brokerage':'Брокер, ₪','l-localLogistics':'Лог. порт→склад, ₪',
+    't-r-cif':'CIF (₪)','t-r-taxbase':'База для налогов (₪)','t-r-duty':'Пошлина (₪)',
+    't-r-vat':'НДС (₪)','t-r-customs':'Таможенные платежи (₪)',
+    't-r-logistics':'Логистика порт→склад (₪)','t-r-broker':'Брокер (₪)','t-r-perunit':'Себестоимость / ед. (₪)',
+    'loading':'Загрузка данных...',
+  },
+  en: {
+    dir:'ltr',
+    't-title':'Import Cost Calculator',
+    't-subtitle':'Israel · Full landed cost with customs',
+    't-sec-product':'Product','t-sec-route':'Route','t-sec-cargo':'Cargo & Shipping',
+    't-sec-customs':'Customs & Taxes','t-sec-results':'Summary',
+    't-sea':'Sea','t-air':'Air','t-land':'Land',
+    'l-productName':'Product name','l-price':'Product price, USD','l-quantity':'Quantity, pcs',
+    'l-countryFrom':'Origin country','l-countryTo':'Destination country',
+    'l-portFrom':'Origin port / Airport','l-portTo':'Destination port / Airport',
+    'l-weight':'Weight, kg','l-volume':'Volume, m³','l-shipping':'Shipping, USD','l-insurance':'Insurance, USD',
+    'l-autoShipping':'Calculate shipping automatically',
+    'l-fxGoods':'USD rate (cost), ₪','l-fxTax':'USD rate (customs), ₪',
+    'l-dutyRate':'Duty, %','l-vatRate':'VAT, %',
+    'l-computerFee':'Computer fee, ₪','l-securityFee':'Security fee, ₪',
+    'l-brokerage':'Broker, ₪','l-localLogistics':'Port→warehouse logistics, ₪',
+    't-r-cif':'CIF (₪)','t-r-taxbase':'Tax base (₪)','t-r-duty':'Duty (₪)',
+    't-r-vat':'VAT (₪)','t-r-customs':'Total customs (₪)',
+    't-r-logistics':'Port→warehouse logistics (₪)','t-r-broker':'Broker (₪)','t-r-perunit':'Cost per unit (₪)',
+    'loading':'Loading data...',
+  },
+  he: {
+    dir:'rtl',
+    't-title':'מחשבון עלות יבוא',
+    't-subtitle':'ישראל · עלות מלאה כולל מכס',
+    't-sec-product':'מוצר','t-sec-route':'מסלול','t-sec-cargo':'משלוח ומטען',
+    't-sec-customs':'מכס ומסים','t-sec-results':'סיכום',
+    't-sea':'ים','t-air':'אוויר','t-land':'יבשה',
+    'l-productName':'שם המוצר','l-price':'מחיר מוצר, USD','l-quantity':'כמות, יח\'',
+    'l-countryFrom':'ארץ מוצא','l-countryTo':'ארץ יעד',
+    'l-portFrom':'נמל / שדה תעופה מוצא','l-portTo':'נמל / שדה תעופה יעד',
+    'l-weight':'משקל, ק"ג','l-volume':'נפח, מ"ק','l-shipping':'משלוח, USD','l-insurance':'ביטוח, USD',
+    'l-autoShipping':'חישוב משלוח אוטומטי',
+    'l-fxGoods':'שער USD (עלות), ₪','l-fxTax':'שער USD (מכס), ₪',
+    'l-dutyRate':'מכס, %','l-vatRate':'מע"מ, %',
+    'l-computerFee':'אגרת מחשב, ₪','l-securityFee':'אגרת ביטחון, ₪',
+    'l-brokerage':'עמלת מכס, ₪','l-localLogistics':'לוגיסטיקה נמל→מחסן, ₪',
+    't-r-cif':'CIF (₪)','t-r-taxbase':'בסיס למיסים (₪)','t-r-duty':'מכס (₪)',
+    't-r-vat':'מע"מ (₪)','t-r-customs':'סה"כ מכס (₪)',
+    't-r-logistics':'לוגיסטיקה נמל→מחסן (₪)','t-r-broker':'עמלת מכס (₪)','t-r-perunit':'עלות ליחידה (₪)',
+    'loading':'טוען נתונים...',
   }
-  return base * rf;
 };
+
+<<<<<<< HEAD
+=======
+// ── COUNTRIES & PORTS ─────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+const PORTS = {
+  China:         { sea:['Shanghai','Ningbo','Shenzhen','Guangzhou','Tianjin','Qingdao'],        air:['Shanghai Pudong (PVG)','Beijing (PEK)','Guangzhou (CAN)','Shenzhen (SZX)'],  land:['Manzhouli','Alashankou'] },
+  India:         { sea:['Mumbai (Nhava Sheva)','Chennai','Kolkata','Mundra','Cochin'],          air:['Mumbai (BOM)','Delhi (DEL)','Chennai (MAA)'],                                land:['Attari (Wagah)'] },
+  UAE:           { sea:['Dubai (Jebel Ali)','Abu Dhabi','Sharjah'],                             air:['Dubai (DXB)','Abu Dhabi (AUH)','Sharjah (SHJ)'],                            land:['Abu Dhabi border'] },
+  Turkey:        { sea:['Istanbul','Izmir','Mersin','Gemlik','Derince'],                        air:['Istanbul (IST)','Ankara (ESB)','Izmir (ADB)'],                               land:['Kapikule','Habur'] },
+  Germany:       { sea:['Hamburg','Bremen / Bremerhaven'],                                      air:['Frankfurt (FRA)','Munich (MUC)','Hamburg (HAM)'],                            land:['Frankfurt border'] },
+  Netherlands:   { sea:['Rotterdam','Amsterdam'],                                               air:['Amsterdam (AMS)'],                                                           land:['Rotterdam border'] },
+  Belgium:       { sea:['Antwerp','Ghent'],                                                     air:['Brussels (BRU)'],                                                            land:['Antwerp border'] },
+  Italy:         { sea:['Genoa','Naples','Livorno','Trieste'],                                  air:['Milan Malpensa (MXP)','Rome (FCO)'],                                         land:['Trieste border'] },
+  France:        { sea:['Marseille','Le Havre','Bordeaux'],                                     air:['Paris CDG (CDG)','Lyon (LYS)'],                                              land:['Lyon border'] },
+  Spain:         { sea:['Barcelona','Valencia','Algeciras'],                                    air:['Madrid (MAD)','Barcelona (BCN)'],                                            land:['Barcelona border'] },
+  UK:            { sea:['Felixstowe','Southampton','London Tilbury'],                           air:['London Heathrow (LHR)','Manchester (MAN)'],                                  land:['Dover'] },
+  USA:           { sea:['Los Angeles','New York (NY/NJ)','Miami','Houston','Savannah'],         air:['New York (JFK)','Los Angeles (LAX)','Miami (MIA)','Chicago (ORD)'],          land:['Laredo TX','Detroit'] },
+  Canada:        { sea:['Vancouver','Montreal','Halifax'],                                      air:['Toronto (YYZ)','Montreal (YUL)','Vancouver (YVR)'],                          land:['Windsor','Surrey BC'] },
+  Vietnam:       { sea:['Ho Chi Minh City','Hai Phong','Da Nang'],                             air:['Ho Chi Minh (SGN)','Hanoi (HAN)'],                                           land:['Lao Cai','Mong Cai'] },
+  Bangladesh:    { sea:['Chittagong','Mongla'],                                                 air:['Dhaka (DAC)'],                                                               land:['Benapole'] },
+  Thailand:      { sea:['Bangkok (Laem Chabang)','Bangkok (Klong Toei)'],                      air:['Bangkok (BKK)','Chiang Mai (CNX)'],                                          land:['Nong Khai','Aranyaprathet'] },
+  'South Korea': { sea:['Busan','Incheon','Gwangyang'],                                        air:['Seoul Incheon (ICN)','Busan (PUS)'],                                         land:['—'] },
+  Japan:         { sea:['Tokyo / Yokohama','Osaka / Kobe','Nagoya'],                           air:['Tokyo Narita (NRT)','Osaka Kansai (KIX)','Nagoya (NGO)'],                    land:['—'] },
+  Israel:        { sea:['Haifa','Ashdod'],                                                      air:['Ben Gurion (TLV)'],                                                          land:['Haifa','Ashdod','Allenby Bridge','Nitzana'] },
+<<<<<<< HEAD
+};
+
+const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => c !== 'Israel');
+const DEST_COUNTRIES   = ['Israel'];
+
+let transport = 'sea';
+let currentLang = 'ru';
+
+=======
+  Russia:        { sea:['St. Petersburg','Novorossiysk','Vladivostok'],                         air:['Moscow Sheremetyevo (SVO)','Moscow Domodedovo (DME)','St. Petersburg (LED)'], land:['Moscow','Yekaterinburg','Novosibirsk'] },
+  Australia:     { sea:['Sydney','Melbourne','Brisbane','Fremantle'],                           air:['Sydney (SYD)','Melbourne (MEL)','Brisbane (BNE)'],                           land:['—'] },
+  Kazakhstan:    { sea:['Aktau (Caspian)'],                                                     air:['Almaty (ALA)','Astana (NQZ)'],                                               land:['Khorgos','Dostyk'] },
+  Poland:        { sea:['Gdansk','Gdynia'],                                                     air:['Warsaw (WAW)','Krakow (KRK)'],                                               land:['Warsaw border'] },
+  'Czech Republic':{ sea:['—'],                                                                 air:['Prague (PRG)'],                                                              land:['Prague border'] },
+  Austria:       { sea:['—'],                                                                   air:['Vienna (VIE)'],                                                              land:['Vienna border'] },
+  Switzerland:   { sea:['—'],                                                                   air:['Zurich (ZRH)','Geneva (GVA)'],                                               land:['Basel border'] },
+  Mexico:        { sea:['Manzanillo','Veracruz','Lazaro Cardenas'],                             air:['Mexico City (MEX)','Guadalajara (GDL)'],                                     land:['Nuevo Laredo','Tijuana'] },
+  Brazil:        { sea:['Santos','Rio de Janeiro','Paranagua'],                                 air:['Sao Paulo Guarulhos (GRU)','Rio de Janeiro (GIG)'],                          land:['Foz do Iguacu'] },
+};
+
+const DEST_COUNTRIES = ['Israel','USA','Canada','Russia','Germany','Netherlands','UK','France','Australia','UAE','Turkey','Brazil','Mexico','Kazakhstan'];
+const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => !DEST_COUNTRIES.includes(c) || true); // all countries can be origin
+
+// ── STATE ─────────────────────────────────────────────────────
+let transport   = 'sea';
+let currentLang = 'ru';
+
+// ── DOM HELPERS ───────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+const $ = id => document.getElementById(id);
+const num = id => { const v = Number.parseFloat($(id)?.value); return Number.isNaN(v) || v < 0 ? 0 : v; };
+const fmt = (v, c='ILS') => new Intl.NumberFormat('en-US',{style:'currency',currency:c,minimumFractionDigits:2}).format(v||0);
+
+function buildSelect(el, options) {
+  el.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
+}
+
+<<<<<<< HEAD
+=======
+// ── INIT ──────────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+function populateCountries() {
+  buildSelect($('countryFrom'), ORIGIN_COUNTRIES);
+  buildSelect($('countryTo'),   DEST_COUNTRIES);
+  $('countryFrom').value = 'China';
+  $('countryTo').value   = 'Israel';
+}
+
+function onCountryChange() {
+  const from = $('countryFrom').value;
+  const to   = $('countryTo').value;
+  buildSelect($('portFrom'), (PORTS[from]||{})[transport] || ['—']);
+  buildSelect($('portTo'),   (PORTS[to]  ||{})[transport] || ['—']);
+  scheduleRecalc();
+}
+
+function setTransport(t) {
+  transport = t;
+  ['sea','air','land'].forEach(x => $('tb-'+x).classList.toggle('active', x===t));
+  onCountryChange();
+}
+
+<<<<<<< HEAD
+=======
+// ── LANGUAGE ─────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+function setLang(lang) {
+  currentLang = lang;
+  const tr = LANG[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir  = tr.dir;
+  ['ru','en','he'].forEach(l => $('btn-'+l).classList.toggle('active', l===lang));
+<<<<<<< HEAD
+=======
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  Object.entries(tr).forEach(([key, val]) => {
+    if (key==='dir' || key==='loading') return;
+    const el = $(key);
+    if (!el) return;
+    if (el.tagName === 'LABEL') {
+<<<<<<< HEAD
+=======
+      // set text node without disturbing child input/select
+>>>>>>> claude/test-and-fix-errors-gxoqi
+      let tn = [...el.childNodes].find(n => n.nodeType===3);
+      if (tn) tn.textContent = val;
+      else el.insertBefore(document.createTextNode(val), el.firstChild);
+    } else {
+      el.textContent = val;
+    }
+  });
+  $('loadingIndicator').textContent = tr['loading'];
+}
+
+<<<<<<< HEAD
+=======
+// ── CUSTOMS AUTO-FILL ─────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+const CUSTOMS_IDS = ['dutyRate','vatRate','fxTax','fxGoods','computerFee','securityFee','localLogistics','brokerage'];
+const userEdited  = new Set();
+CUSTOMS_IDS.forEach(id => $(id)?.addEventListener('input', () => userEdited.add(id)));
+
+const routeFactor = () => {
+  const f = $('countryFrom').value.toLowerCase();
+  const t = $('countryTo').value.toLowerCase();
+  if (!f||!t||f===t) return 0.35;
+  const reg = { china:'as', india:'as', vietnam:'as', bangladesh:'as', thailand:'as', 'south korea':'as', japan:'as',
+                uae:'me', israel:'me', turkey:'eu', germany:'eu', netherlands:'eu', belgium:'eu',
+                italy:'eu', france:'eu', spain:'eu', uk:'eu', usa:'na', canada:'na' };
+  return reg[f]&&reg[t]&&reg[f]===reg[t] ? 0.8 : 1.18;
+};
+
+const shippingEstimate = () => {
+  const vol=num('volume'), wt=num('weight'), rf=routeFactor();
+  let base=0;
+  if (transport==='sea') { const cbm=vol>0?vol:Math.max(0.1,wt/350); base=Math.max(220,cbm*115); }
+  else if (transport==='air') { const ch=Math.max(wt,vol*167,1); base=Math.max(160,ch*6.8); }
+  else { base=Math.max(140,Math.max(wt*1.15,vol*78)); }
+  return base*rf;
+};
+
 const fallbackCustoms = () => {
-  const wt = num('weight'), vol = num('volume'), price = num('price');
-  const handling = Math.max(1, Math.ceil(Math.max(wt / 120, vol / 1.5)));
-  const fxGoods = Math.max(0.0001, num('fxGoods'));
+  const wt=num('weight'), vol=num('volume'), price=num('price');
+  const handling=Math.max(1,Math.ceil(Math.max(wt/120,vol/1.5)));
+  const fxG=Math.max(0.0001,num('fxGoods'));
   return {
-    dutyRate: 0,
-    vatRate: 18,
-    // Fix #7: fxTax defaults to fxGoods — user should enter the official customs rate manually
-    fxTax: Number(fxGoods.toFixed(4)),
-    computerFee: Number((32 + handling * 6).toFixed(2)),
-    securityFee: Number((38 + handling * 5).toFixed(2)),
-    localLogistics: Number((1800 + wt * 1.9 + vol * 420).toFixed(2)),
-    inlandDelivery: Number((380 + wt * 0.65 + vol * 120).toFixed(2)),
-    brokerage: Number((290 + price * 0.012).toFixed(2)),
-    source: 'fallback-model'
+    dutyRate:0, vatRate:18,
+    fxTax: Number(fxG.toFixed(4)),
+    computerFee:   Number((32+handling*6).toFixed(2)),
+    securityFee:   Number((38+handling*5).toFixed(2)),
+    localLogistics:Number((1800+wt*1.9+vol*420).toFixed(2)),
+    brokerage:     Number((290+price*0.012).toFixed(2)),
+    source:'fallback'
   };
 };
-async function fetchMarketCustoms() {
-  const fallback = fallbackCustoms();
-  if (!AI_URL) return fallback;
-  try {
-    const res = await fetch(AI_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(AI_KEY ? { Authorization: `Bearer ${AI_KEY}` } : {})
-      },
-      body: JSON.stringify({
-        task: 'market_customs_inputs',
-        destinationCountry: els.countryTo.value,
-        originCountry: els.countryFrom.value,
-        productName: els.productName.value,
-        weightKg: num('weight'),
-        volumeCbm: num('volume'),
-        priceUsd: num('price')
-      })
-    });
-    if (!res.ok) return fallback;
-    const d = await res.json();
-    return {
-      dutyRate: +d.dutyRate || fallback.dutyRate,
-      vatRate: +d.vatRate || fallback.vatRate,
-      fxTax: +d.fxTax || fallback.fxTax,
-      computerFee: +d.computerFee || fallback.computerFee,
-      securityFee: +d.securityFee || fallback.securityFee,
-      localLogistics: +d.localLogistics || fallback.localLogistics,
-      inlandDelivery: +d.inlandDelivery || fallback.inlandDelivery,
-      brokerage: +d.brokerage || fallback.brokerage,
-      source: 'ai-agent'
-    };
-  } catch { return fallback; }
-}
-// Fix #2: debounce timer + version counter prevents race conditions
-let recalcTimer = null;
-let recalcVersion = 0;
-// Fix #3: track which customs fields the user has manually edited — skip auto-update for those
-const CUSTOMS_FIELDS = ['dutyRate', 'vatRate', 'fxTax', 'computerFee', 'securityFee', 'localLogistics', 'inlandDelivery', 'brokerage'];
-const userEdited = new Set();
-CUSTOMS_FIELDS.forEach(id => {
-  els[id].addEventListener('input', () => userEdited.add(id));
-});
+
+<<<<<<< HEAD
+=======
+// ── RECALC ────────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+let recalcTimer=null, recalcVersion=0;
+
 async function recalc() {
-  const version = ++recalcVersion;
-  // Fix #8: show loading indicator while fetching
-  document.getElementById('loadingIndicator').style.display = 'inline';
-  const customs = await fetchMarketCustoms();
-  // Fix #2: if a newer recalc started while we were awaiting, discard stale result
-  if (version !== recalcVersion) return;
-  // Fix #3: only update fields the user hasn't manually overridden
-  Object.entries(customs).forEach(([k, v]) => {
-    if (els[k] && !userEdited.has(k)) els[k].value = v;
+  const ver = ++recalcVersion;
+  $('loadingIndicator').style.display='inline';
+<<<<<<< HEAD
+  const customs = fallbackCustoms();
+  if (ver!==recalcVersion) return;
+=======
+
+  const customs = fallbackCustoms();
+  if (ver!==recalcVersion) return;
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  CUSTOMS_IDS.forEach(k => {
+    const el=$(k);
+    if (el && !userEdited.has(k) && customs[k]!==undefined) el.value=customs[k];
   });
-  document.getElementById('loadingIndicator').style.display = 'none';
-  document.getElementById('marketInfo').textContent =
-    `Источник: ${customs.source}. Внутренняя доставка и брокер рассчитаны рыночно по весу/объёму/стоимости.`;
-  const price = num('price');
-  const isAutoShipping = els.shippingMode.value === 'calculate';
-  const shipping = isAutoShipping ? shippingEstimate() : num('shipping');
-  // Fix #4: readonly в режиме авторасчёта — поле визуально заблокировано
-  els.shipping.readOnly = isAutoShipping;
-  if (isAutoShipping) els.shipping.value = shipping.toFixed(2);
-  const ins = num('insurance');
-  const fxGoods = Math.max(0.0001, num('fxGoods'));
-  const fxTax = Math.max(0.0001, num('fxTax'));
-  const dutyRate = num('dutyRate') / 100;
-  const vatRate = num('vatRate') / 100;
-  const qty = Math.max(1, num('quantity'));
-  const internationalUsd = shipping + ins;
-  const cifNis = (price + internationalUsd) * fxGoods;
-  const taxBaseNis = (price + internationalUsd) * fxTax;
-  const dutyNis = taxBaseNis * dutyRate;
-  const vatNis = (taxBaseNis + dutyNis) * vatRate;
-  const customsTotal = dutyNis + vatNis + num('computerFee') + num('securityFee');
-  const totalNis = cifNis + customsTotal + num('localLogistics') + num('inlandDelivery') + num('brokerage');
-  // Fix #6: totalUsd конвертируется через fxGoods (коммерческий курс, тот же что и CIF)
-  const totalUsd = totalNis / fxGoods;
-  document.getElementById('totalNis').textContent = fmt(totalNis, 'ILS');
-  document.getElementById('totalUsd').textContent = fmt(totalUsd, 'USD');
-  document.getElementById('cifNis').textContent = fmt(cifNis, 'ILS');
-  document.getElementById('taxBaseNis').textContent = fmt(taxBaseNis, 'ILS');
-  document.getElementById('dutyNis').textContent = fmt(dutyNis, 'ILS');
-  document.getElementById('vatNis').textContent = fmt(vatNis, 'ILS');
-  document.getElementById('customsTotal').textContent = fmt(customsTotal, 'ILS');
-  document.getElementById('localLogisticsRow').textContent = fmt(num('localLogistics'), 'ILS');
-  document.getElementById('inlandDeliveryRow').textContent = fmt(num('inlandDelivery'), 'ILS');
-  document.getElementById('brokerageRow').textContent = fmt(num('brokerage'), 'ILS');
-  document.getElementById('perUnit').textContent = fmt(totalNis / qty, 'ILS');
+<<<<<<< HEAD
+  $('loadingIndicator').style.display='none';
+  $('marketInfo').textContent=`Source: ${customs.source}`;
+=======
+
+  $('loadingIndicator').style.display='none';
+  $('marketInfo').textContent=`Source: ${customs.source}`;
+
+  // shipping
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  const isAuto=$('autoShipping').checked;
+  const shEl=$('shipping');
+  shEl.readOnly=isAuto;
+  const shipping=isAuto?shippingEstimate():num('shipping');
+  if(isAuto) shEl.value=shipping.toFixed(2);
+<<<<<<< HEAD
+=======
+
+  // calc
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  const price=num('price'), ins=num('insurance');
+  const fxGoods=Math.max(0.0001,num('fxGoods'));
+  const fxTax  =Math.max(0.0001,num('fxTax'));
+  const dutyRate=num('dutyRate')/100;
+  const vatRate =num('vatRate')/100;
+  const qty=Math.max(1,num('quantity'));
+<<<<<<< HEAD
+=======
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  const intlUsd    =shipping+ins;
+  const cifNis     =(price+intlUsd)*fxGoods;
+  const taxBaseNis =(price+intlUsd)*fxTax;
+  const dutyNis    =taxBaseNis*dutyRate;
+  const vatNis     =(taxBaseNis+dutyNis)*vatRate;
+  const customsTotal=dutyNis+vatNis+num('computerFee')+num('securityFee');
+  const totalNis   =cifNis+customsTotal+num('localLogistics')+num('brokerage');
+  const totalUsd   =totalNis/fxGoods;
+<<<<<<< HEAD
+=======
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
+  $('totalNis').textContent        =fmt(totalNis,'ILS');
+  $('totalUsd').textContent        =fmt(totalUsd,'USD');
+  $('cifNis').textContent          =fmt(cifNis,'ILS');
+  $('taxBaseNis').textContent      =fmt(taxBaseNis,'ILS');
+  $('dutyNis').textContent         =fmt(dutyNis,'ILS');
+  $('vatNis').textContent          =fmt(vatNis,'ILS');
+  $('customsTotal').textContent    =fmt(customsTotal,'ILS');
+  $('localLogisticsRow').textContent=fmt(num('localLogistics'),'ILS');
+  $('brokerageRow').textContent    =fmt(num('brokerage'),'ILS');
+  $('perUnit').textContent         =fmt(totalNis/qty,'ILS');
 }
+
 function scheduleRecalc() {
   clearTimeout(recalcTimer);
-  recalcTimer = setTimeout(recalc, 300);
+  recalcTimer=setTimeout(recalc,200);
 }
-Object.values(els).forEach(el => el.addEventListener('input', scheduleRecalc));
+
+<<<<<<< HEAD
+=======
+// ── BIND INPUTS ───────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+document.querySelectorAll('input,select').forEach(el => {
+  if(el.id!=='countryFrom'&&el.id!=='countryTo')
+    el.addEventListener('input',scheduleRecalc);
+});
+
+<<<<<<< HEAD
+=======
+// ── START ─────────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
+populateCountries();
+onCountryChange();
+setLang('ru');
 recalc();
 </script>
 </body>
+</html>

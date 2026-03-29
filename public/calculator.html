@@ -43,6 +43,10 @@
 <body>
 <div class="wrap">
 
+<<<<<<< HEAD
+=======
+  <!-- Header -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="header-row">
     <div>
       <h1 id="t-title">Калькулятор стоимости импорта</h1>
@@ -55,6 +59,10 @@
     </div>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- Product -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="card">
     <div class="sec-title" id="t-sec-product">Товар</div>
     <div class="grid g3">
@@ -64,6 +72,10 @@
     </div>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- Route -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="card">
     <div class="sec-title" id="t-sec-route">Маршрут</div>
     <div class="transport-bar">
@@ -81,6 +93,10 @@
     </div>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- Cargo -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="card">
     <div class="sec-title" id="t-sec-cargo">Груз и доставка</div>
     <div class="grid g4">
@@ -95,6 +111,10 @@
     </div>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- Customs -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="card">
     <div class="sec-title" id="t-sec-customs">Таможня и налоги</div>
     <p class="loading" id="loadingIndicator" style="display:none">Загрузка данных...</p>
@@ -114,6 +134,10 @@
     </div>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- Results -->
+>>>>>>> claude/test-and-fix-errors-gxoqi
   <div class="card">
     <div class="sec-title" id="t-sec-results">Итого</div>
     <div class="big" id="totalNis">₪0.00</div>
@@ -132,6 +156,10 @@
 
 </div>
 <script>
+<<<<<<< HEAD
+=======
+// ── TRANSLATIONS ──────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 const LANG = {
   ru: {
     dir:'ltr',
@@ -198,6 +226,10 @@ const LANG = {
   }
 };
 
+<<<<<<< HEAD
+=======
+// ── COUNTRIES & PORTS ─────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 const PORTS = {
   China:         { sea:['Shanghai','Ningbo','Shenzhen','Guangzhou','Tianjin','Qingdao'],        air:['Shanghai Pudong (PVG)','Beijing (PEK)','Guangzhou (CAN)','Shenzhen (SZX)'],  land:['Manzhouli','Alashankou'] },
   India:         { sea:['Mumbai (Nhava Sheva)','Chennai','Kolkata','Mundra','Cochin'],          air:['Mumbai (BOM)','Delhi (DEL)','Chennai (MAA)'],                                land:['Attari (Wagah)'] },
@@ -218,6 +250,7 @@ const PORTS = {
   'South Korea': { sea:['Busan','Incheon','Gwangyang'],                                        air:['Seoul Incheon (ICN)','Busan (PUS)'],                                         land:['—'] },
   Japan:         { sea:['Tokyo / Yokohama','Osaka / Kobe','Nagoya'],                           air:['Tokyo Narita (NRT)','Osaka Kansai (KIX)','Nagoya (NGO)'],                    land:['—'] },
   Israel:        { sea:['Haifa','Ashdod'],                                                      air:['Ben Gurion (TLV)'],                                                          land:['Haifa','Ashdod','Allenby Bridge','Nitzana'] },
+<<<<<<< HEAD
 };
 
 const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => c !== 'Israel');
@@ -226,6 +259,27 @@ const DEST_COUNTRIES   = ['Israel'];
 let transport = 'sea';
 let currentLang = 'ru';
 
+=======
+  Russia:        { sea:['St. Petersburg','Novorossiysk','Vladivostok'],                         air:['Moscow Sheremetyevo (SVO)','Moscow Domodedovo (DME)','St. Petersburg (LED)'], land:['Moscow','Yekaterinburg','Novosibirsk'] },
+  Australia:     { sea:['Sydney','Melbourne','Brisbane','Fremantle'],                           air:['Sydney (SYD)','Melbourne (MEL)','Brisbane (BNE)'],                           land:['—'] },
+  Kazakhstan:    { sea:['Aktau (Caspian)'],                                                     air:['Almaty (ALA)','Astana (NQZ)'],                                               land:['Khorgos','Dostyk'] },
+  Poland:        { sea:['Gdansk','Gdynia'],                                                     air:['Warsaw (WAW)','Krakow (KRK)'],                                               land:['Warsaw border'] },
+  'Czech Republic':{ sea:['—'],                                                                 air:['Prague (PRG)'],                                                              land:['Prague border'] },
+  Austria:       { sea:['—'],                                                                   air:['Vienna (VIE)'],                                                              land:['Vienna border'] },
+  Switzerland:   { sea:['—'],                                                                   air:['Zurich (ZRH)','Geneva (GVA)'],                                               land:['Basel border'] },
+  Mexico:        { sea:['Manzanillo','Veracruz','Lazaro Cardenas'],                             air:['Mexico City (MEX)','Guadalajara (GDL)'],                                     land:['Nuevo Laredo','Tijuana'] },
+  Brazil:        { sea:['Santos','Rio de Janeiro','Paranagua'],                                 air:['Sao Paulo Guarulhos (GRU)','Rio de Janeiro (GIG)'],                          land:['Foz do Iguacu'] },
+};
+
+const DEST_COUNTRIES = ['Israel','USA','Canada','Russia','Germany','Netherlands','UK','France','Australia','UAE','Turkey','Brazil','Mexico','Kazakhstan'];
+const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => !DEST_COUNTRIES.includes(c) || true); // all countries can be origin
+
+// ── STATE ─────────────────────────────────────────────────────
+let transport   = 'sea';
+let currentLang = 'ru';
+
+// ── DOM HELPERS ───────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 const $ = id => document.getElementById(id);
 const num = id => { const v = Number.parseFloat($(id)?.value); return Number.isNaN(v) || v < 0 ? 0 : v; };
 const fmt = (v, c='ILS') => new Intl.NumberFormat('en-US',{style:'currency',currency:c,minimumFractionDigits:2}).format(v||0);
@@ -234,6 +288,10 @@ function buildSelect(el, options) {
   el.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
 }
 
+<<<<<<< HEAD
+=======
+// ── INIT ──────────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 function populateCountries() {
   buildSelect($('countryFrom'), ORIGIN_COUNTRIES);
   buildSelect($('countryTo'),   DEST_COUNTRIES);
@@ -255,17 +313,29 @@ function setTransport(t) {
   onCountryChange();
 }
 
+<<<<<<< HEAD
+=======
+// ── LANGUAGE ─────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 function setLang(lang) {
   currentLang = lang;
   const tr = LANG[lang];
   document.documentElement.lang = lang;
   document.documentElement.dir  = tr.dir;
   ['ru','en','he'].forEach(l => $('btn-'+l).classList.toggle('active', l===lang));
+<<<<<<< HEAD
+=======
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
   Object.entries(tr).forEach(([key, val]) => {
     if (key==='dir' || key==='loading') return;
     const el = $(key);
     if (!el) return;
     if (el.tagName === 'LABEL') {
+<<<<<<< HEAD
+=======
+      // set text node without disturbing child input/select
+>>>>>>> claude/test-and-fix-errors-gxoqi
       let tn = [...el.childNodes].find(n => n.nodeType===3);
       if (tn) tn.textContent = val;
       else el.insertBefore(document.createTextNode(val), el.firstChild);
@@ -276,6 +346,10 @@ function setLang(lang) {
   $('loadingIndicator').textContent = tr['loading'];
 }
 
+<<<<<<< HEAD
+=======
+// ── CUSTOMS AUTO-FILL ─────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 const CUSTOMS_IDS = ['dutyRate','vatRate','fxTax','fxGoods','computerFee','securityFee','localLogistics','brokerage'];
 const userEdited  = new Set();
 CUSTOMS_IDS.forEach(id => $(id)?.addEventListener('input', () => userEdited.add(id)));
@@ -314,30 +388,58 @@ const fallbackCustoms = () => {
   };
 };
 
+<<<<<<< HEAD
+=======
+// ── RECALC ────────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 let recalcTimer=null, recalcVersion=0;
 
 async function recalc() {
   const ver = ++recalcVersion;
   $('loadingIndicator').style.display='inline';
+<<<<<<< HEAD
   const customs = fallbackCustoms();
   if (ver!==recalcVersion) return;
+=======
+
+  const customs = fallbackCustoms();
+  if (ver!==recalcVersion) return;
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
   CUSTOMS_IDS.forEach(k => {
     const el=$(k);
     if (el && !userEdited.has(k) && customs[k]!==undefined) el.value=customs[k];
   });
+<<<<<<< HEAD
   $('loadingIndicator').style.display='none';
   $('marketInfo').textContent=`Source: ${customs.source}`;
+=======
+
+  $('loadingIndicator').style.display='none';
+  $('marketInfo').textContent=`Source: ${customs.source}`;
+
+  // shipping
+>>>>>>> claude/test-and-fix-errors-gxoqi
   const isAuto=$('autoShipping').checked;
   const shEl=$('shipping');
   shEl.readOnly=isAuto;
   const shipping=isAuto?shippingEstimate():num('shipping');
   if(isAuto) shEl.value=shipping.toFixed(2);
+<<<<<<< HEAD
+=======
+
+  // calc
+>>>>>>> claude/test-and-fix-errors-gxoqi
   const price=num('price'), ins=num('insurance');
   const fxGoods=Math.max(0.0001,num('fxGoods'));
   const fxTax  =Math.max(0.0001,num('fxTax'));
   const dutyRate=num('dutyRate')/100;
   const vatRate =num('vatRate')/100;
   const qty=Math.max(1,num('quantity'));
+<<<<<<< HEAD
+=======
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
   const intlUsd    =shipping+ins;
   const cifNis     =(price+intlUsd)*fxGoods;
   const taxBaseNis =(price+intlUsd)*fxTax;
@@ -346,6 +448,10 @@ async function recalc() {
   const customsTotal=dutyNis+vatNis+num('computerFee')+num('securityFee');
   const totalNis   =cifNis+customsTotal+num('localLogistics')+num('brokerage');
   const totalUsd   =totalNis/fxGoods;
+<<<<<<< HEAD
+=======
+
+>>>>>>> claude/test-and-fix-errors-gxoqi
   $('totalNis').textContent        =fmt(totalNis,'ILS');
   $('totalUsd').textContent        =fmt(totalUsd,'USD');
   $('cifNis').textContent          =fmt(cifNis,'ILS');
@@ -363,11 +469,19 @@ function scheduleRecalc() {
   recalcTimer=setTimeout(recalc,200);
 }
 
+<<<<<<< HEAD
+=======
+// ── BIND INPUTS ───────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 document.querySelectorAll('input,select').forEach(el => {
   if(el.id!=='countryFrom'&&el.id!=='countryTo')
     el.addEventListener('input',scheduleRecalc);
 });
 
+<<<<<<< HEAD
+=======
+// ── START ─────────────────────────────────────────────────────
+>>>>>>> claude/test-and-fix-errors-gxoqi
 populateCountries();
 onCountryChange();
 setLang('ru');
