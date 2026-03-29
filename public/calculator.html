@@ -43,7 +43,6 @@
 <body>
 <div class="wrap">
 
-  <!-- Header -->
   <div class="header-row">
     <div>
       <h1 id="t-title">Калькулятор стоимости импорта</h1>
@@ -56,7 +55,6 @@
     </div>
   </div>
 
-  <!-- Product -->
   <div class="card">
     <div class="sec-title" id="t-sec-product">Товар</div>
     <div class="grid g3">
@@ -66,7 +64,6 @@
     </div>
   </div>
 
-  <!-- Route -->
   <div class="card">
     <div class="sec-title" id="t-sec-route">Маршрут</div>
     <div class="transport-bar">
@@ -84,7 +81,6 @@
     </div>
   </div>
 
-  <!-- Cargo -->
   <div class="card">
     <div class="sec-title" id="t-sec-cargo">Груз и доставка</div>
     <div class="grid g4">
@@ -99,7 +95,6 @@
     </div>
   </div>
 
-  <!-- Customs -->
   <div class="card">
     <div class="sec-title" id="t-sec-customs">Таможня и налоги</div>
     <p class="loading" id="loadingIndicator" style="display:none">Загрузка данных...</p>
@@ -119,7 +114,6 @@
     </div>
   </div>
 
-  <!-- Results -->
   <div class="card">
     <div class="sec-title" id="t-sec-results">Итого</div>
     <div class="big" id="totalNis">₪0.00</div>
@@ -138,7 +132,6 @@
 
 </div>
 <script>
-// ── TRANSLATIONS ──────────────────────────────────────────────
 const LANG = {
   ru: {
     dir:'ltr',
@@ -205,54 +198,41 @@ const LANG = {
   }
 };
 
-// ── COUNTRIES & PORTS ─────────────────────────────────────────
 const PORTS = {
-  China:         { sea:['Shanghai','Ningbo','Shenzhen','Guangzhou','Tianjin','Qingdao'],        air:['Shanghai Pudong (PVG)','Beijing (PEK)','Guangzhou (CAN)','Shenzhen (SZX)'],  land:['Manzhouli','Alashankou'] },
-  India:         { sea:['Mumbai (Nhava Sheva)','Chennai','Kolkata','Mundra','Cochin'],          air:['Mumbai (BOM)','Delhi (DEL)','Chennai (MAA)'],                                land:['Attari (Wagah)'] },
-  UAE:           { sea:['Dubai (Jebel Ali)','Abu Dhabi','Sharjah'],                             air:['Dubai (DXB)','Abu Dhabi (AUH)','Sharjah (SHJ)'],                            land:['Abu Dhabi border'] },
-  Turkey:        { sea:['Istanbul','Izmir','Mersin','Gemlik','Derince'],                        air:['Istanbul (IST)','Ankara (ESB)','Izmir (ADB)'],                               land:['Kapikule','Habur'] },
-  Germany:       { sea:['Hamburg','Bremen / Bremerhaven'],                                      air:['Frankfurt (FRA)','Munich (MUC)','Hamburg (HAM)'],                            land:['Frankfurt border'] },
-  Netherlands:   { sea:['Rotterdam','Amsterdam'],                                               air:['Amsterdam (AMS)'],                                                           land:['Rotterdam border'] },
-  Belgium:       { sea:['Antwerp','Ghent'],                                                     air:['Brussels (BRU)'],                                                            land:['Antwerp border'] },
-  Italy:         { sea:['Genoa','Naples','Livorno','Trieste'],                                  air:['Milan Malpensa (MXP)','Rome (FCO)'],                                         land:['Trieste border'] },
-  France:        { sea:['Marseille','Le Havre','Bordeaux'],                                     air:['Paris CDG (CDG)','Lyon (LYS)'],                                              land:['Lyon border'] },
-  Spain:         { sea:['Barcelona','Valencia','Algeciras'],                                    air:['Madrid (MAD)','Barcelona (BCN)'],                                            land:['Barcelona border'] },
-  UK:            { sea:['Felixstowe','Southampton','London Tilbury'],                           air:['London Heathrow (LHR)','Manchester (MAN)'],                                  land:['Dover'] },
-  USA:           { sea:['Los Angeles','New York (NY/NJ)','Miami','Houston','Savannah'],         air:['New York (JFK)','Los Angeles (LAX)','Miami (MIA)','Chicago (ORD)'],          land:['Laredo TX','Detroit'] },
-  Canada:        { sea:['Vancouver','Montreal','Halifax'],                                      air:['Toronto (YYZ)','Montreal (YUL)','Vancouver (YVR)'],                          land:['Windsor','Surrey BC'] },
-  Vietnam:       { sea:['Ho Chi Minh City','Hai Phong','Da Nang'],                             air:['Ho Chi Minh (SGN)','Hanoi (HAN)'],                                           land:['Lao Cai','Mong Cai'] },
-  Bangladesh:    { sea:['Chittagong','Mongla'],                                                 air:['Dhaka (DAC)'],                                                               land:['Benapole'] },
-  Thailand:      { sea:['Bangkok (Laem Chabang)','Bangkok (Klong Toei)'],                      air:['Bangkok (BKK)','Chiang Mai (CNX)'],                                          land:['Nong Khai','Aranyaprathet'] },
-  'South Korea': { sea:['Busan','Incheon','Gwangyang'],                                        air:['Seoul Incheon (ICN)','Busan (PUS)'],                                         land:['—'] },
-  Japan:         { sea:['Tokyo / Yokohama','Osaka / Kobe','Nagoya'],                           air:['Tokyo Narita (NRT)','Osaka Kansai (KIX)','Nagoya (NGO)'],                    land:['—'] },
-  Israel:        { sea:['Haifa','Ashdod'],                                                      air:['Ben Gurion (TLV)'],                                                          land:['Haifa','Ashdod','Allenby Bridge','Nitzana'] },
+  China:           { sea:['Shanghai','Ningbo','Shenzhen','Guangzhou','Tianjin','Qingdao'],          air:['Shanghai Pudong (PVG)','Beijing (PEK)','Guangzhou (CAN)','Shenzhen (SZX)'],    land:['Manzhouli','Alashankou'] },
+  India:           { sea:['Mumbai (Nhava Sheva)','Chennai','Kolkata','Mundra','Cochin'],            air:['Mumbai (BOM)','Delhi (DEL)','Chennai (MAA)'],                                  land:['Attari (Wagah)'] },
+  UAE:             { sea:['Dubai (Jebel Ali)','Abu Dhabi','Sharjah'],                               air:['Dubai (DXB)','Abu Dhabi (AUH)','Sharjah (SHJ)'],                              land:['Abu Dhabi border'] },
+  Turkey:          { sea:['Istanbul','Izmir','Mersin','Gemlik','Derince'],                          air:['Istanbul (IST)','Ankara (ESB)','Izmir (ADB)'],                                 land:['Kapikule','Habur'] },
+  Germany:         { sea:['Hamburg','Bremen / Bremerhaven'],                                        air:['Frankfurt (FRA)','Munich (MUC)','Hamburg (HAM)'],                              land:['Frankfurt border'] },
+  Netherlands:     { sea:['Rotterdam','Amsterdam'],                                                 air:['Amsterdam (AMS)'],                                                             land:['Rotterdam border'] },
+  Belgium:         { sea:['Antwerp','Ghent'],                                                       air:['Brussels (BRU)'],                                                              land:['Antwerp border'] },
+  Italy:           { sea:['Genoa','Naples','Livorno','Trieste'],                                    air:['Milan Malpensa (MXP)','Rome (FCO)'],                                           land:['Trieste border'] },
+  France:          { sea:['Marseille','Le Havre','Bordeaux'],                                       air:['Paris CDG (CDG)','Lyon (LYS)'],                                                land:['Lyon border'] },
+  Spain:           { sea:['Barcelona','Valencia','Algeciras'],                                      air:['Madrid (MAD)','Barcelona (BCN)'],                                              land:['Barcelona border'] },
+  UK:              { sea:['Felixstowe','Southampton','London Tilbury'],                             air:['London Heathrow (LHR)','Manchester (MAN)'],                                    land:['Dover'] },
+  USA:             { sea:['Los Angeles','New York (NY/NJ)','Miami','Houston','Savannah'],           air:['New York (JFK)','Los Angeles (LAX)','Miami (MIA)','Chicago (ORD)'],            land:['Laredo TX','Detroit'] },
+  Canada:          { sea:['Vancouver','Montreal','Halifax'],                                        air:['Toronto (YYZ)','Montreal (YUL)','Vancouver (YVR)'],                            land:['Windsor','Surrey BC'] },
+  Russia:          { sea:['St. Petersburg','Novorossiysk','Vladivostok'],                          air:['Moscow Sheremetyevo (SVO)','Moscow Domodedovo (DME)','St. Petersburg (LED)'],  land:['Moscow','Yekaterinburg','Novosibirsk'] },
+  Vietnam:         { sea:['Ho Chi Minh City','Hai Phong','Da Nang'],                               air:['Ho Chi Minh (SGN)','Hanoi (HAN)'],                                             land:['Lao Cai','Mong Cai'] },
+  Bangladesh:      { sea:['Chittagong','Mongla'],                                                   air:['Dhaka (DAC)'],                                                                 land:['Benapole'] },
+  Thailand:        { sea:['Bangkok (Laem Chabang)','Bangkok (Klong Toei)'],                        air:['Bangkok (BKK)','Chiang Mai (CNX)'],                                            land:['Nong Khai','Aranyaprathet'] },
+  'South Korea':   { sea:['Busan','Incheon','Gwangyang'],                                          air:['Seoul Incheon (ICN)','Busan (PUS)'],                                           land:['—'] },
+  Japan:           { sea:['Tokyo / Yokohama','Osaka / Kobe','Nagoya'],                             air:['Tokyo Narita (NRT)','Osaka Kansai (KIX)','Nagoya (NGO)'],                      land:['—'] },
+  Australia:       { sea:['Sydney','Melbourne','Brisbane','Fremantle'],                             air:['Sydney (SYD)','Melbourne (MEL)','Brisbane (BNE)'],                             land:['—'] },
+  Kazakhstan:      { sea:['Aktau (Caspian)'],                                                       air:['Almaty (ALA)','Astana (NQZ)'],                                                 land:['Khorgos','Dostyk'] },
+  Poland:          { sea:['Gdansk','Gdynia'],                                                       air:['Warsaw (WAW)','Krakow (KRK)'],                                                 land:['Warsaw border'] },
+  Switzerland:     { sea:['—'],                                                                     air:['Zurich (ZRH)','Geneva (GVA)'],                                                 land:['Basel border'] },
+  Mexico:          { sea:['Manzanillo','Veracruz','Lazaro Cardenas'],                               air:['Mexico City (MEX)','Guadalajara (GDL)'],                                       land:['Nuevo Laredo','Tijuana'] },
+  Brazil:          { sea:['Santos','Rio de Janeiro','Paranagua'],                                   air:['Sao Paulo Guarulhos (GRU)','Rio de Janeiro (GIG)'],                            land:['Foz do Iguacu'] },
+  Israel:          { sea:['Haifa','Ashdod'],                                                        air:['Ben Gurion (TLV)'],                                                            land:['Haifa','Ashdod','Allenby Bridge','Nitzana'] },
 };
 
-const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => c !== 'Israel');
-const DEST_COUNTRIES   = ['Israel'];
+const DEST_COUNTRIES = ['Israel','USA','Canada','Russia','Germany','Netherlands','UK','France','Australia','UAE','Turkey','Brazil','Mexico','Kazakhstan'];
+const ORIGIN_COUNTRIES = Object.keys(PORTS);
 
 let transport = 'sea';
 let currentLang = 'ru';
 
-  Russia:        { sea:['St. Petersburg','Novorossiysk','Vladivostok'],                         air:['Moscow Sheremetyevo (SVO)','Moscow Domodedovo (DME)','St. Petersburg (LED)'], land:['Moscow','Yekaterinburg','Novosibirsk'] },
-  Australia:     { sea:['Sydney','Melbourne','Brisbane','Fremantle'],                           air:['Sydney (SYD)','Melbourne (MEL)','Brisbane (BNE)'],                           land:['—'] },
-  Kazakhstan:    { sea:['Aktau (Caspian)'],                                                     air:['Almaty (ALA)','Astana (NQZ)'],                                               land:['Khorgos','Dostyk'] },
-  Poland:        { sea:['Gdansk','Gdynia'],                                                     air:['Warsaw (WAW)','Krakow (KRK)'],                                               land:['Warsaw border'] },
-  'Czech Republic':{ sea:['—'],                                                                 air:['Prague (PRG)'],                                                              land:['Prague border'] },
-  Austria:       { sea:['—'],                                                                   air:['Vienna (VIE)'],                                                              land:['Vienna border'] },
-  Switzerland:   { sea:['—'],                                                                   air:['Zurich (ZRH)','Geneva (GVA)'],                                               land:['Basel border'] },
-  Mexico:        { sea:['Manzanillo','Veracruz','Lazaro Cardenas'],                             air:['Mexico City (MEX)','Guadalajara (GDL)'],                                     land:['Nuevo Laredo','Tijuana'] },
-  Brazil:        { sea:['Santos','Rio de Janeiro','Paranagua'],                                 air:['Sao Paulo Guarulhos (GRU)','Rio de Janeiro (GIG)'],                          land:['Foz do Iguacu'] },
-};
-
-const DEST_COUNTRIES = ['Israel','USA','Canada','Russia','Germany','Netherlands','UK','France','Australia','UAE','Turkey','Brazil','Mexico','Kazakhstan'];
-const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => !DEST_COUNTRIES.includes(c) || true); // all countries can be origin
-
-// ── STATE ─────────────────────────────────────────────────────
-let transport   = 'sea';
-let currentLang = 'ru';
-
-// ── DOM HELPERS ───────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const num = id => { const v = Number.parseFloat($(id)?.value); return Number.isNaN(v) || v < 0 ? 0 : v; };
 const fmt = (v, c='ILS') => new Intl.NumberFormat('en-US',{style:'currency',currency:c,minimumFractionDigits:2}).format(v||0);
@@ -261,7 +241,6 @@ function buildSelect(el, options) {
   el.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
 }
 
-// ── INIT ──────────────────────────────────────────────────────
 function populateCountries() {
   buildSelect($('countryFrom'), ORIGIN_COUNTRIES);
   buildSelect($('countryTo'),   DEST_COUNTRIES);
@@ -283,20 +262,17 @@ function setTransport(t) {
   onCountryChange();
 }
 
-// ── LANGUAGE ─────────────────────────────────────────────────
 function setLang(lang) {
   currentLang = lang;
   const tr = LANG[lang];
   document.documentElement.lang = lang;
   document.documentElement.dir  = tr.dir;
   ['ru','en','he'].forEach(l => $('btn-'+l).classList.toggle('active', l===lang));
-
   Object.entries(tr).forEach(([key, val]) => {
     if (key==='dir' || key==='loading') return;
     const el = $(key);
     if (!el) return;
     if (el.tagName === 'LABEL') {
-      // set text node without disturbing child input/select
       let tn = [...el.childNodes].find(n => n.nodeType===3);
       if (tn) tn.textContent = val;
       else el.insertBefore(document.createTextNode(val), el.firstChild);
@@ -307,9 +283,8 @@ function setLang(lang) {
   $('loadingIndicator').textContent = tr['loading'];
 }
 
-// ── CUSTOMS AUTO-FILL ─────────────────────────────────────────
 const CUSTOMS_IDS = ['dutyRate','vatRate','fxTax','fxGoods','computerFee','securityFee','localLogistics','brokerage'];
-const userEdited  = new Set();
+const userEdited = new Set();
 CUSTOMS_IDS.forEach(id => $(id)?.addEventListener('input', () => userEdited.add(id)));
 
 const routeFactor = () => {
@@ -318,7 +293,9 @@ const routeFactor = () => {
   if (!f||!t||f===t) return 0.35;
   const reg = { china:'as', india:'as', vietnam:'as', bangladesh:'as', thailand:'as', 'south korea':'as', japan:'as',
                 uae:'me', israel:'me', turkey:'eu', germany:'eu', netherlands:'eu', belgium:'eu',
-                italy:'eu', france:'eu', spain:'eu', uk:'eu', usa:'na', canada:'na' };
+                italy:'eu', france:'eu', spain:'eu', uk:'eu', poland:'eu', switzerland:'eu',
+                usa:'na', canada:'na', mexico:'na', brazil:'sa',
+                russia:'ru', kazakhstan:'ru', australia:'oc' };
   return reg[f]&&reg[t]&&reg[f]===reg[t] ? 0.8 : 1.18;
 };
 
@@ -337,7 +314,7 @@ const fallbackCustoms = () => {
   const fxG=Math.max(0.0001,num('fxGoods'));
   return {
     dutyRate:0, vatRate:18,
-    fxTax: Number(fxG.toFixed(4)),
+    fxTax:         Number(fxG.toFixed(4)),
     computerFee:   Number((32+handling*6).toFixed(2)),
     securityFee:   Number((38+handling*5).toFixed(2)),
     localLogistics:Number((1800+wt*1.9+vol*420).toFixed(2)),
@@ -346,15 +323,11 @@ const fallbackCustoms = () => {
   };
 };
 
-// ── RECALC ────────────────────────────────────────────────────
 let recalcTimer=null, recalcVersion=0;
 
 async function recalc() {
   const ver = ++recalcVersion;
   $('loadingIndicator').style.display='inline';
-  const customs = fallbackCustoms();
-  if (ver!==recalcVersion) return;
-
   const customs = fallbackCustoms();
   if (ver!==recalcVersion) return;
 
@@ -365,17 +338,12 @@ async function recalc() {
   $('loadingIndicator').style.display='none';
   $('marketInfo').textContent=`Source: ${customs.source}`;
 
-  $('loadingIndicator').style.display='none';
-  $('marketInfo').textContent=`Source: ${customs.source}`;
-
-  // shipping
   const isAuto=$('autoShipping').checked;
   const shEl=$('shipping');
   shEl.readOnly=isAuto;
   const shipping=isAuto?shippingEstimate():num('shipping');
   if(isAuto) shEl.value=shipping.toFixed(2);
 
-  // calc
   const price=num('price'), ins=num('insurance');
   const fxGoods=Math.max(0.0001,num('fxGoods'));
   const fxTax  =Math.max(0.0001,num('fxTax'));
@@ -392,16 +360,16 @@ async function recalc() {
   const totalNis   =cifNis+customsTotal+num('localLogistics')+num('brokerage');
   const totalUsd   =totalNis/fxGoods;
 
-  $('totalNis').textContent        =fmt(totalNis,'ILS');
-  $('totalUsd').textContent        =fmt(totalUsd,'USD');
-  $('cifNis').textContent          =fmt(cifNis,'ILS');
-  $('taxBaseNis').textContent      =fmt(taxBaseNis,'ILS');
-  $('dutyNis').textContent         =fmt(dutyNis,'ILS');
-  $('vatNis').textContent          =fmt(vatNis,'ILS');
-  $('customsTotal').textContent    =fmt(customsTotal,'ILS');
+  $('totalNis').textContent         =fmt(totalNis,'ILS');
+  $('totalUsd').textContent         =fmt(totalUsd,'USD');
+  $('cifNis').textContent           =fmt(cifNis,'ILS');
+  $('taxBaseNis').textContent       =fmt(taxBaseNis,'ILS');
+  $('dutyNis').textContent          =fmt(dutyNis,'ILS');
+  $('vatNis').textContent           =fmt(vatNis,'ILS');
+  $('customsTotal').textContent     =fmt(customsTotal,'ILS');
   $('localLogisticsRow').textContent=fmt(num('localLogistics'),'ILS');
-  $('brokerageRow').textContent    =fmt(num('brokerage'),'ILS');
-  $('perUnit').textContent         =fmt(totalNis/qty,'ILS');
+  $('brokerageRow').textContent     =fmt(num('brokerage'),'ILS');
+  $('perUnit').textContent          =fmt(totalNis/qty,'ILS');
 }
 
 function scheduleRecalc() {
@@ -409,13 +377,11 @@ function scheduleRecalc() {
   recalcTimer=setTimeout(recalc,200);
 }
 
-// ── BIND INPUTS ───────────────────────────────────────────────
 document.querySelectorAll('input,select').forEach(el => {
   if(el.id!=='countryFrom'&&el.id!=='countryTo')
     el.addEventListener('input',scheduleRecalc);
 });
 
-// ── START ─────────────────────────────────────────────────────
 populateCountries();
 onCountryChange();
 setLang('ru');
