@@ -287,25 +287,82 @@ const CUSTOMS_IDS = ['dutyRate','vatRate','fxTax','fxGoods','computerFee','secur
 const userEdited = new Set();
 CUSTOMS_IDS.forEach(id => $(id)?.addEventListener('input', () => userEdited.add(id)));
 
-const routeFactor = () => {
-  const f = $('countryFrom').value.toLowerCase();
-  const t = $('countryTo').value.toLowerCase();
-  if (!f||!t||f===t) return 0.35;
-  const reg = { china:'as', india:'as', vietnam:'as', bangladesh:'as', thailand:'as', 'south korea':'as', japan:'as',
-                uae:'me', israel:'me', turkey:'eu', germany:'eu', netherlands:'eu', belgium:'eu',
-                italy:'eu', france:'eu', spain:'eu', uk:'eu', poland:'eu', switzerland:'eu',
-                usa:'na', canada:'na', mexico:'na', brazil:'sa',
-                russia:'ru', kazakhstan:'ru', australia:'oc' };
-  return reg[f]&&reg[t]&&reg[f]===reg[t] ? 0.8 : 1.18;
+// ── FREIGHT RATES (2025 market data) ─────────────────────────
+// Sea LCL: all-in USD per CBM (ocean + surcharges + CFS handling)
+// Air: USD per chargeable kg (max of actual weight vs volumetric weight)
+// Sources: Sino-Shipping, Agora Freight, Tonlexing, WebCargo (Jan 2026)
+const SEA_RATES = {
+  China:       { Israel:100, USA:120, Canada:130, Germany:140, Netherlands:140, UK:145, France:140, Australia:90,  Russia:155, UAE:80,  Brazil:160, Mexico:130, Kazakhstan:140, default:120 },
+  India:       { Israel:110, USA:135, Canada:140, Germany:140, Netherlands:140, UK:145, France:140, Australia:100, Russia:150, UAE:70,  Brazil:165, Mexico:140, Kazakhstan:145, default:125 },
+  UAE:         { Israel:60,  USA:150, Canada:155, Germany:100, Netherlands:100, UK:105, France:100, Australia:120, Russia:130, Brazil:170, Mexico:155, Kazakhstan:90, default:110 },
+  Turkey:      { Israel:60,  USA:145, Canada:150, Germany:80,  Netherlands:80,  UK:85,  France:80,  Australia:130, Russia:100, UAE:70,  Brazil:160, Mexico:150, Kazakhstan:100, default:95  },
+  Germany:     { Israel:75,  USA:130, Canada:135, Netherlands:30, UK:40,        France:35, Australia:150, Russia:90, UAE:95, Brazil:145, Mexico:140, Kazakhstan:95, default:100 },
+  Netherlands: { Israel:75,  USA:130, Canada:135, Germany:30,  UK:40,          France:35, Australia:150, Russia:90, UAE:95, Brazil:145, Mexico:140, Kazakhstan:95, default:100 },
+  UK:          { Israel:80,  USA:120, Canada:125, Germany:40,  Netherlands:40,  France:40, Australia:155, Russia:95, UAE:100, Brazil:148, Mexico:142, Kazakhstan:98, default:105 },
+  France:      { Israel:78,  USA:130, Canada:135, Germany:35,  Netherlands:35,  UK:40,  Australia:152, Russia:92, UAE:97, Brazil:146, Mexico:141, Kazakhstan:96, default:102 },
+  USA:         { Israel:150, Canada:80, Germany:130, Netherlands:130, UK:125, France:130, Australia:140, Russia:160, UAE:145, Brazil:90, Mexico:70, Kazakhstan:155, default:130 },
+  Canada:      { Israel:155, USA:80,  Germany:135, Netherlands:135, UK:130, France:135, Australia:145, Russia:160, UAE:150, Brazil:95, Mexico:80, Kazakhstan:158, default:135 },
+  Vietnam:     { Israel:105, USA:125, Canada:130, Germany:145, Netherlands:145, UK:148, France:145, Australia:85, Russia:150, UAE:85, default:120 },
+  Bangladesh:  { Israel:112, USA:130, Germany:142, default:122 },
+  Thailand:    { Israel:108, USA:128, Germany:143, default:120 },
+  'South Korea':{ Israel:115, USA:120, Germany:145, Australia:80, default:118 },
+  Japan:       { Israel:120, USA:115, Germany:148, Australia:85, default:120 },
+  Russia:      { Israel:90,  Germany:85, Netherlands:85, UAE:100, Kazakhstan:40, default:100 },
+  Australia:   { Israel:150, USA:140, Germany:155, default:145 },
+  Kazakhstan:  { Israel:95,  Russia:40, Germany:110, UAE:90, default:100 },
+  Brazil:      { Israel:160, USA:90,  Germany:145, default:140 },
+  Mexico:      { Israel:155, USA:70,  Germany:148, default:138 },
+  default:     { default:130 }
 };
 
+const AIR_RATES = {
+  China:       { Israel:6.0, USA:5.0, Canada:5.2, Germany:5.5, Netherlands:5.5, UK:5.8, France:5.5, Australia:5.0, Russia:7.0, UAE:4.5, default:6.0 },
+  India:       { Israel:6.5, USA:6.2, Germany:6.0, UAE:4.0, default:6.5 },
+  UAE:         { Israel:4.0, USA:8.0, Germany:5.5, UK:5.5, default:5.5 },
+  Turkey:      { Israel:4.5, Germany:3.5, Netherlands:3.5, UK:4.0, default:5.0 },
+  Germany:     { Israel:6.0, USA:7.0, Canada:7.2, UK:3.5, France:3.0, default:6.0 },
+  Netherlands: { Israel:6.0, USA:7.0, Germany:3.0, UK:3.5, default:6.0 },
+  UK:          { Israel:6.5, USA:7.0, Germany:3.5, France:3.5, default:6.5 },
+  USA:         { Israel:9.0, Canada:4.0, Germany:7.0, UK:7.0, default:8.0 },
+  Canada:      { Israel:9.5, USA:4.0, Germany:7.2, default:8.5 },
+  Vietnam:     { Israel:6.2, USA:5.5, Germany:5.8, default:6.2 },
+  'South Korea':{ Israel:6.5, USA:5.5, Germany:6.0, default:6.5 },
+  Japan:       { Israel:6.8, USA:5.5, Germany:6.2, default:6.8 },
+  Russia:      { Israel:8.0, Germany:7.0, default:8.0 },
+  Australia:   { Israel:9.0, USA:8.5, default:9.0 },
+  default:     { default:7.5 }
+};
+
+function getRate(table, from, to) {
+  const row = table[from] || table['default'] || {};
+  return row[to] || row['default'] || (table['default'] || {})['default'] || 100;
+}
+
 const shippingEstimate = () => {
-  const vol=num('volume'), wt=num('weight'), rf=routeFactor();
-  let base=0;
-  if (transport==='sea') { const cbm=vol>0?vol:Math.max(0.1,wt/350); base=Math.max(220,cbm*115); }
-  else if (transport==='air') { const ch=Math.max(wt,vol*167,1); base=Math.max(160,ch*6.8); }
-  else { base=Math.max(140,Math.max(wt*1.15,vol*78)); }
-  return base*rf;
+  const vol = num('volume');
+  const wt  = num('weight');
+  const from = $('countryFrom').value;
+  const to   = $('countryTo').value;
+
+  if (transport === 'sea') {
+    const cbm  = vol > 0 ? vol : Math.max(1, wt / 350); // estimate if no volume
+    const cbmCharged = Math.max(1, cbm);                  // min 1 CBM
+    const rate = getRate(SEA_RATES, from, to);             // $/CBM market rate
+    const portInspection = cbmCharged <= 4 ? 115 : 210;   // Israel port inspection
+    return cbmCharged * rate + portInspection;
+  }
+
+  if (transport === 'air') {
+    const volumetricKg  = vol * 167;                       // IATA: 1 CBM = 167 kg
+    const chargeableKg  = Math.max(wt, volumetricKg, 45); // min 45 kg
+    const rate = getRate(AIR_RATES, from, to);             // $/kg market rate
+    return chargeableKg * rate;
+  }
+
+  // Land: rough estimate based on weight + distance factor
+  const distFactor = { Turkey:1.2, Russia:2.5, Kazakhstan:2.8, Germany:3.5, Poland:3.2, default:3.0 };
+  const df = distFactor[from] || distFactor['default'];
+  return Math.max(200, (wt * 1.2 + vol * 80) * df);
 };
 
 const fallbackCustoms = () => {
@@ -336,7 +393,13 @@ async function recalc() {
     if (el && !userEdited.has(k) && customs[k]!==undefined) el.value=customs[k];
   });
   $('loadingIndicator').style.display='none';
-  $('marketInfo').textContent=`Source: ${customs.source}`;
+  const from = $('countryFrom').value, to = $('countryTo').value;
+  const rateInfo = transport==='sea'
+    ? `Море LCL: $${getRate(SEA_RATES,from,to)}/м³ + портовый сбор Израиль`
+    : transport==='air'
+    ? `Авиа: $${getRate(AIR_RATES,from,to)}/кг расч. веса (1м³=167кг, мин. 45кг)`
+    : 'Суша: расчёт по весу и расстоянию';
+  $('marketInfo').textContent=`Ставка фрахта (рынок 2025): ${rateInfo}. Таможня: ${customs.source}.`;
 
   const isAuto=$('autoShipping').checked;
   const shEl=$('shipping');
