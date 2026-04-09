@@ -1,0 +1,6 @@
+{
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/", "destination": "/calculator.html" }
+  ]
+}
