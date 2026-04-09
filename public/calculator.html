@@ -5,49 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Import Cost Calculator</title>
   <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:#020617;color:#e2e8f0}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    .card{background:#0f172acc;border:1px solid #1e293b;border-radius:16px;padding:20px;margin-bottom:16px}
-    h1{margin:0 0 4px;font-size:22px}
-    .grid{display:grid;gap:12px}
-    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0b1226;color:#f8fafc;font-size:14px;outline:none;transition:border-color .15s}
-    input:focus,select:focus{border-color:#6366f1}
-    input[readonly]{background:#0f1f3a;color:#64748b;cursor:not-allowed}
-    label{font-size:12px;color:#94a3b8;display:grid;gap:6px}
-    .muted{color:#94a3b8;font-size:12px;margin:4px 0 0}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    td{padding:9px 6px;border-bottom:1px solid #1e293b;font-size:14px}
-    td:last-child{text-align:right;font-weight:600;color:#f1f5f9}
-    .big{font-size:32px;font-weight:700;color:#f1f5f9}
-    .sub{font-size:14px;color:#94a3b8;margin-top:2px}
-    .loading{color:#6366f1;font-size:12px;margin-top:4px}
-    .header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-    .lang-bar{display:flex;gap:6px;flex-shrink:0;margin-top:4px}
-    .lang-bar button{padding:5px 14px;border-radius:8px;border:1px solid #334155;background:#0b1226;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-    .lang-bar button.active{background:#6366f1;border-color:#6366f1;color:#fff}
-    .transport-bar{display:flex;gap:8px;margin-bottom:14px}
-    .transport-bar button{flex:1;padding:9px;border-radius:10px;border:1px solid #334155;background:#0b1226;color:#94a3b8;font-size:13px;cursor:pointer;transition:all .15s}
-    .transport-bar button.active{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd;font-weight:600}
-    .sec-title{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
-    .divider{border:none;border-top:1px solid #1e293b;margin:14px 0}
-    .auto-row{display:flex;align-items:center;gap:8px;margin-top:10px}
-    .auto-row input{width:auto;accent-color:#6366f1}
-    .auto-row label{font-size:13px;color:#94a3b8;display:inline}
-    @media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}.header-row{flex-direction:column}}
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #020617; color: #e2e8f0; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .sub { color: #94a3b8; font-size: 13px; margin: 0; }
+    .sec { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+    .grid { display: grid; gap: 10px; }
+    .g2 { grid-template-columns: 1fr 1fr; }
+    .g3 { grid-template-columns: 1fr 1fr 1fr; }
+    .g4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    label { font-size: 12px; color: #94a3b8; display: flex; flex-direction: column; gap: 5px; }
+    input, select {
+      padding: 9px 11px; border-radius: 9px; border: 1px solid #334155;
+      background: #0b1226; color: #f8fafc; font-size: 14px; outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus { border-color: #6366f1; }
+    input[readonly] { background: #0f1f3a; color: #64748b; cursor: not-allowed; }
+    .divider { border: none; border-top: 1px solid #1e293b; margin: 12px 0; }
+    .tbar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tbar button {
+      flex: 1; padding: 9px; border-radius: 9px; border: 1px solid #334155;
+      background: #0b1226; color: #94a3b8; font-size: 13px; cursor: pointer;
+    }
+    .tbar button.active { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; font-weight: 600; }
+    .lang-bar { display: flex; gap: 6px; }
+    .lang-bar button {
+      padding: 5px 13px; border-radius: 7px; border: 1px solid #334155;
+      background: #0b1226; color: #94a3b8; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .lang-bar button.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .auto-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .auto-row input { width: auto; accent-color: #6366f1; }
+    .auto-row label { font-size: 13px; color: #94a3b8; flex-direction: row; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td { padding: 8px 6px; border-bottom: 1px solid #1e293b; font-size: 14px; }
+    td:last-child { text-align: right; font-weight: 600; color: #f1f5f9; }
+    .big { font-size: 30px; font-weight: 700; color: #f1f5f9; }
+    .usd { font-size: 14px; color: #94a3b8; margin-top: 2px; }
+    @media (max-width: 650px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } .header-row { flex-direction: column; } }
   </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- Header -->
   <div class="header-row">
     <div>
       <h1 id="t-title">Калькулятор стоимости импорта</h1>
-      <p class="muted" id="t-subtitle">Израиль · Полная себестоимость с таможней</p>
+      <p class="sub" id="t-sub">Полная себестоимость с таможней</p>
     </div>
     <div class="lang-bar">
       <button onclick="setLang('ru')" id="btn-ru" class="active">RU</button>
@@ -56,358 +64,356 @@
     </div>
   </div>
 
-  <!-- Product -->
+  <!-- Товар -->
   <div class="card">
-    <div class="sec-title" id="t-sec-product">Товар</div>
+    <div class="sec" id="t-s-product">Товар</div>
     <div class="grid g3">
-      <label id="l-productName">Название товара<input id="productName" type="text" value="Ноутбук" /></label>
-      <label id="l-price">Цена товара, USD<input id="price" type="number" value="2200" min="0" step="0.01" /></label>
-      <label id="l-quantity">Количество, шт<input id="quantity" type="number" value="1" min="1" step="1" /></label>
+      <label id="l-name">Название товара<input id="productName" type="text" value="Ноутбук" /></label>
+      <label id="l-price">Цена товара, USD<input id="price" type="number" value="2200" min="0" /></label>
+      <label id="l-qty">Количество, шт<input id="qty" type="number" value="1" min="1" /></label>
     </div>
   </div>
 
-  <!-- Route -->
+  <!-- Маршрут -->
   <div class="card">
-    <div class="sec-title" id="t-sec-route">Маршрут</div>
-    <div class="transport-bar">
-      <button id="tb-sea" class="active" onclick="setTransport('sea')">🚢 <span id="t-sea">Море</span></button>
-      <button id="tb-air" onclick="setTransport('air')">✈️ <span id="t-air">Воздух</span></button>
-      <button id="tb-land" onclick="setTransport('land')">🚛 <span id="t-land">Суша</span></button>
+    <div class="sec" id="t-s-route">Маршрут</div>
+    <div class="tbar">
+      <button id="tb-sea" class="active" onclick="setMode('sea')">🚢 <span id="t-sea">Море</span></button>
+      <button id="tb-air" onclick="setMode('air')">✈️ <span id="t-air">Воздух</span></button>
+      <button id="tb-land" onclick="setMode('land')">🚛 <span id="t-land">Суша</span></button>
     </div>
-    <div class="grid g2" style="margin-bottom:12px">
-      <label id="l-countryFrom">Страна отправления<select id="countryFrom" onchange="onCountryChange()"></select></label>
-      <label id="l-countryTo">Страна назначения<select id="countryTo" onchange="onCountryChange()"></select></label>
+    <div class="grid g2" style="margin-bottom:10px">
+      <label id="l-from">Страна отправления
+        <select id="countryFrom" onchange="onRoute()"></select>
+      </label>
+      <label id="l-to">Страна назначения
+        <select id="countryTo" onchange="onRoute()"></select>
+      </label>
     </div>
     <div class="grid g2">
-      <label id="l-portFrom">Порт / аэропорт отправления<select id="portFrom" onchange="scheduleRecalc()"></select></label>
-      <label id="l-portTo">Порт / аэропорт назначения<select id="portTo" onchange="scheduleRecalc()"></select></label>
+      <label id="l-port-from">Порт отправления<select id="portFrom"></select></label>
+      <label id="l-port-to">Порт назначения<select id="portTo"></select></label>
     </div>
   </div>
 
-  <!-- Cargo -->
+  <!-- Груз -->
   <div class="card">
-    <div class="sec-title" id="t-sec-cargo">Груз и доставка</div>
+    <div class="sec" id="t-s-cargo">Груз и доставка</div>
     <div class="grid g4">
-      <label id="l-weight">Вес, кг<input id="weight" type="number" value="180" min="0" step="0.01" /></label>
-      <label id="l-volume">Объём, м³<input id="volume" type="number" value="1.4" min="0" step="0.01" /></label>
-      <label id="l-shipping">Доставка, USD<input id="shipping" type="number" value="613" min="0" step="0.01" /></label>
-      <label id="l-insurance">Страхование, USD<input id="insurance" type="number" value="0" min="0" step="0.01" /></label>
+      <label id="l-kg">Вес, кг<input id="weight" type="number" value="180" min="0" /></label>
+      <label id="l-cbm">Объём, м³<input id="volume" type="number" value="1.4" min="0" step="0.01" /></label>
+      <label id="l-ship">Доставка, USD<input id="shipping" type="number" value="0" min="0" /></label>
+      <label id="l-ins">Страхование, USD<input id="insurance" type="number" value="0" min="0" /></label>
     </div>
     <div class="auto-row">
-      <input type="checkbox" id="autoShipping" checked onchange="scheduleRecalc()" />
-      <label for="autoShipping" id="l-autoShipping">Рассчитать доставку автоматически</label>
+      <input type="checkbox" id="autoShip" checked onchange="calc()" />
+      <label for="autoShip" id="l-auto">Рассчитать доставку автоматически</label>
     </div>
   </div>
 
-  <!-- Customs -->
+  <!-- Таможня -->
   <div class="card">
-    <div class="sec-title" id="t-sec-customs">Таможня и налоги</div>
-    <p class="loading" id="loadingIndicator" style="display:none">Загрузка данных...</p>
-    <p class="muted" id="marketInfo"></p>
-    <div class="grid g4" style="margin-top:10px">
-      <label id="l-fxGoods">Курс USD (себест.), ₪<input id="fxGoods" type="number" step="0.0001" value="3.65" /></label>
-      <label id="l-fxTax">Курс USD (таможня), ₪<input id="fxTax" type="number" step="0.0001" value="3.65" /></label>
-      <label id="l-dutyRate">Пошлина, %<input id="dutyRate" type="number" step="0.1" /></label>
-      <label id="l-vatRate">НДС, %<input id="vatRate" type="number" step="0.1" /></label>
+    <div class="sec" id="t-s-customs">Таможня и налоги</div>
+    <div class="grid g4">
+      <label id="l-fx">Курс: 1 USD =<input id="fxRate" type="number" value="3.65" step="0.0001" /></label>
+      <label id="l-cur">Валюта<input id="currency" type="text" value="ILS" readonly /></label>
+      <label id="l-duty">Пошлина, %<input id="dutyRate" type="number" value="12" step="0.1" /></label>
+      <label id="l-vat">НДС / VAT, %<input id="vatRate" type="number" value="18" step="0.1" /></label>
     </div>
     <hr class="divider" />
     <div class="grid g4">
-      <label id="l-computerFee">Агрот מחשב, ₪<input id="computerFee" type="number" /></label>
-      <label id="l-securityFee">Агрот ביטחון, ₪<input id="securityFee" type="number" /></label>
-      <label id="l-brokerage">Брокер, ₪<input id="brokerage" type="number" /></label>
-      <label id="l-localLogistics">Лог. порт→склад, ₪<input id="localLogistics" type="number" /></label>
+      <label id="l-fee1">Сбор 1<input id="fee1" type="number" value="115" /></label>
+      <label id="l-fee2">Сбор 2<input id="fee2" type="number" value="95" /></label>
+      <label id="l-broker">Брокер<input id="broker" type="number" value="290" /></label>
+      <label id="l-local">Лог. порт→склад<input id="localLog" type="number" value="1800" /></label>
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- Итого -->
   <div class="card">
-    <div class="sec-title" id="t-sec-results">Итого</div>
-    <div class="big" id="totalNis">₪0.00</div>
-    <div class="sub" id="totalUsd">$0.00</div>
+    <div class="sec" id="t-s-results">Итого</div>
+    <div class="big" id="totalLocal">—</div>
+    <div class="usd" id="totalUsd">—</div>
     <table>
-      <tr><td id="t-r-cif">CIF (₪)</td><td id="cifNis"></td></tr>
-      <tr><td id="t-r-taxbase">База для налогов (₪)</td><td id="taxBaseNis"></td></tr>
-      <tr><td id="t-r-duty">Пошлина (₪)</td><td id="dutyNis"></td></tr>
-      <tr><td id="t-r-vat">НДС (₪)</td><td id="vatNis"></td></tr>
-      <tr><td id="t-r-customs">Таможенные платежи (₪)</td><td id="customsTotal"></td></tr>
-      <tr><td id="t-r-logistics">Логистика порт→склад (₪)</td><td id="localLogisticsRow"></td></tr>
-      <tr><td id="t-r-broker">Брокер (₪)</td><td id="brokerageRow"></td></tr>
-      <tr><td id="t-r-perunit">Себестоимость / ед. (₪)</td><td id="perUnit"></td></tr>
+      <tr><td id="t-r-cif">CIF (товар + доставка)</td><td id="r-cif">—</td></tr>
+      <tr><td id="t-r-duty">Пошлина</td><td id="r-duty">—</td></tr>
+      <tr><td id="t-r-vat">НДС</td><td id="r-vat">—</td></tr>
+      <tr><td id="t-r-fee">Сборы + брокер</td><td id="r-fee">—</td></tr>
+      <tr><td id="t-r-log">Лог. порт→склад</td><td id="r-log">—</td></tr>
+      <tr><td id="t-r-unit">Себестоимость / ед.</td><td id="r-unit">—</td></tr>
     </table>
   </div>
 
 </div>
 <script>
-// ── TRANSLATIONS ──────────────────────────────────────────────
-const LANG = {
+// ── Переводы ─────────────────────────────────────────────────────────────────
+const T = {
   ru: {
-    dir:'ltr',
+    dir: 'ltr',
     't-title':'Калькулятор стоимости импорта',
-    't-subtitle':'Израиль · Полная себестоимость с таможней',
-    't-sec-product':'Товар','t-sec-route':'Маршрут','t-sec-cargo':'Груз и доставка',
-    't-sec-customs':'Таможня и налоги','t-sec-results':'Итого',
+    't-sub':'Полная себестоимость с таможней',
+    't-s-product':'Товар','t-s-route':'Маршрут',
+    't-s-cargo':'Груз и доставка','t-s-customs':'Таможня и налоги','t-s-results':'Итого',
     't-sea':'Море','t-air':'Воздух','t-land':'Суша',
-    'l-productName':'Название товара','l-price':'Цена товара, USD','l-quantity':'Количество, шт',
-    'l-countryFrom':'Страна отправления','l-countryTo':'Страна назначения',
-    'l-portFrom':'Порт / аэропорт отправления','l-portTo':'Порт / аэропорт назначения',
-    'l-weight':'Вес, кг','l-volume':'Объём, м³','l-shipping':'Доставка, USD','l-insurance':'Страхование, USD',
-    'l-autoShipping':'Рассчитать доставку автоматически',
-    'l-fxGoods':'Курс USD (себест.), ₪','l-fxTax':'Курс USD (таможня), ₪',
-    'l-dutyRate':'Пошлина, %','l-vatRate':'НДС, %',
-    'l-computerFee':'Агрот מחשב, ₪','l-securityFee':'Агрот ביטחון, ₪',
-    'l-brokerage':'Брокер, ₪','l-localLogistics':'Лог. порт→склад, ₪',
-    't-r-cif':'CIF (₪)','t-r-taxbase':'База для налогов (₪)','t-r-duty':'Пошлина (₪)',
-    't-r-vat':'НДС (₪)','t-r-customs':'Таможенные платежи (₪)',
-    't-r-logistics':'Логистика порт→склад (₪)','t-r-broker':'Брокер (₪)','t-r-perunit':'Себестоимость / ед. (₪)',
-    'loading':'Загрузка данных...',
+    'l-name':'Название товара','l-price':'Цена товара, USD','l-qty':'Количество, шт',
+    'l-from':'Страна отправления','l-to':'Страна назначения',
+    'l-port-from':'Порт отправления','l-port-to':'Порт назначения',
+    'l-kg':'Вес, кг','l-cbm':'Объём, м³','l-ship':'Доставка, USD','l-ins':'Страхование, USD',
+    'l-auto':'Рассчитать доставку автоматически',
+    'l-fx':'Курс: 1 USD =','l-cur':'Валюта',
+    'l-duty':'Пошлина, %','l-vat':'НДС, %',
+    'l-fee1':'Сбор 1','l-fee2':'Сбор 2','l-broker':'Брокер','l-local':'Лог. порт→склад',
+    't-r-cif':'CIF (товар + доставка)','t-r-duty':'Пошлина','t-r-vat':'НДС',
+    't-r-fee':'Сборы + брокер','t-r-log':'Лог. порт→склад','t-r-unit':'Себестоимость / ед.',
   },
   en: {
-    dir:'ltr',
+    dir: 'ltr',
     't-title':'Import Cost Calculator',
-    't-subtitle':'Israel · Full landed cost with customs',
-    't-sec-product':'Product','t-sec-route':'Route','t-sec-cargo':'Cargo & Shipping',
-    't-sec-customs':'Customs & Taxes','t-sec-results':'Summary',
+    't-sub':'Full landed cost with customs',
+    't-s-product':'Product','t-s-route':'Route',
+    't-s-cargo':'Cargo & Shipping','t-s-customs':'Customs & Taxes','t-s-results':'Summary',
     't-sea':'Sea','t-air':'Air','t-land':'Land',
-    'l-productName':'Product name','l-price':'Product price, USD','l-quantity':'Quantity, pcs',
-    'l-countryFrom':'Origin country','l-countryTo':'Destination country',
-    'l-portFrom':'Origin port / Airport','l-portTo':'Destination port / Airport',
-    'l-weight':'Weight, kg','l-volume':'Volume, m³','l-shipping':'Shipping, USD','l-insurance':'Insurance, USD',
-    'l-autoShipping':'Calculate shipping automatically',
-    'l-fxGoods':'USD rate (cost), ₪','l-fxTax':'USD rate (customs), ₪',
-    'l-dutyRate':'Duty, %','l-vatRate':'VAT, %',
-    'l-computerFee':'Computer fee, ₪','l-securityFee':'Security fee, ₪',
-    'l-brokerage':'Broker, ₪','l-localLogistics':'Port→warehouse logistics, ₪',
-    't-r-cif':'CIF (₪)','t-r-taxbase':'Tax base (₪)','t-r-duty':'Duty (₪)',
-    't-r-vat':'VAT (₪)','t-r-customs':'Total customs (₪)',
-    't-r-logistics':'Port→warehouse logistics (₪)','t-r-broker':'Broker (₪)','t-r-perunit':'Cost per unit (₪)',
-    'loading':'Loading data...',
+    'l-name':'Product name','l-price':'Product price, USD','l-qty':'Quantity, pcs',
+    'l-from':'Origin country','l-to':'Destination country',
+    'l-port-from':'Origin port','l-port-to':'Destination port',
+    'l-kg':'Weight, kg','l-cbm':'Volume, m³','l-ship':'Shipping, USD','l-ins':'Insurance, USD',
+    'l-auto':'Calculate shipping automatically',
+    'l-fx':'Rate: 1 USD =','l-cur':'Currency',
+    'l-duty':'Duty, %','l-vat':'VAT, %',
+    'l-fee1':'Fee 1','l-fee2':'Fee 2','l-broker':'Broker','l-local':'Port→warehouse',
+    't-r-cif':'CIF (goods + shipping)','t-r-duty':'Duty','t-r-vat':'VAT',
+    't-r-fee':'Fees + broker','t-r-log':'Port→warehouse logistics','t-r-unit':'Cost per unit',
   },
   he: {
-    dir:'rtl',
+    dir: 'rtl',
     't-title':'מחשבון עלות יבוא',
-    't-subtitle':'ישראל · עלות מלאה כולל מכס',
-    't-sec-product':'מוצר','t-sec-route':'מסלול','t-sec-cargo':'משלוח ומטען',
-    't-sec-customs':'מכס ומסים','t-sec-results':'סיכום',
+    't-sub':'עלות מלאה כולל מכס',
+    't-s-product':'מוצר','t-s-route':'מסלול',
+    't-s-cargo':'משלוח ומטען','t-s-customs':'מכס ומסים','t-s-results':'סיכום',
     't-sea':'ים','t-air':'אוויר','t-land':'יבשה',
-    'l-productName':'שם המוצר','l-price':'מחיר מוצר, USD','l-quantity':'כמות, יח\'',
-    'l-countryFrom':'ארץ מוצא','l-countryTo':'ארץ יעד',
-    'l-portFrom':'נמל / שדה תעופה מוצא','l-portTo':'נמל / שדה תעופה יעד',
-    'l-weight':'משקל, ק"ג','l-volume':'נפח, מ"ק','l-shipping':'משלוח, USD','l-insurance':'ביטוח, USD',
-    'l-autoShipping':'חישוב משלוח אוטומטי',
-    'l-fxGoods':'שער USD (עלות), ₪','l-fxTax':'שער USD (מכס), ₪',
-    'l-dutyRate':'מכס, %','l-vatRate':'מע"מ, %',
-    'l-computerFee':'אגרת מחשב, ₪','l-securityFee':'אגרת ביטחון, ₪',
-    'l-brokerage':'עמלת מכס, ₪','l-localLogistics':'לוגיסטיקה נמל→מחסן, ₪',
-    't-r-cif':'CIF (₪)','t-r-taxbase':'בסיס למיסים (₪)','t-r-duty':'מכס (₪)',
-    't-r-vat':'מע"מ (₪)','t-r-customs':'סה"כ מכס (₪)',
-    't-r-logistics':'לוגיסטיקה נמל→מחסן (₪)','t-r-broker':'עמלת מכס (₪)','t-r-perunit':'עלות ליחידה (₪)',
-    'loading':'טוען נתונים...',
+    'l-name':'שם המוצר','l-price':'מחיר מוצר, USD','l-qty':'כמות, יח\'',
+    'l-from':'ארץ מוצא','l-to':'ארץ יעד',
+    'l-port-from':'נמל מוצא','l-port-to':'נמל יעד',
+    'l-kg':'משקל, ק"ג','l-cbm':'נפח, מ"ק','l-ship':'משלוח, USD','l-ins':'ביטוח, USD',
+    'l-auto':'חישוב משלוח אוטומטי',
+    'l-fx':'שער: 1 USD =','l-cur':'מטבע',
+    'l-duty':'מכס, %','l-vat':'מע"מ, %',
+    'l-fee1':'אגרת מחשב','l-fee2':'אגרת ביטחון','l-broker':'עמלת מכס','l-local':'לוגיסטיקה נמל→מחסן',
+    't-r-cif':'CIF (סחורה + משלוח)','t-r-duty':'מכס','t-r-vat':'מע"מ',
+    't-r-fee':'אגרות + עמלת מכס','t-r-log':'לוגיסטיקה נמל→מחסן','t-r-unit':'עלות ליחידה',
   }
 };
 
-// ── COUNTRIES & PORTS ─────────────────────────────────────────
-const PORTS = {
-  China:         { sea:['Shanghai','Ningbo','Shenzhen','Guangzhou','Tianjin','Qingdao'],        air:['Shanghai Pudong (PVG)','Beijing (PEK)','Guangzhou (CAN)','Shenzhen (SZX)'],  land:['Manzhouli','Alashankou'] },
-  India:         { sea:['Mumbai (Nhava Sheva)','Chennai','Kolkata','Mundra','Cochin'],          air:['Mumbai (BOM)','Delhi (DEL)','Chennai (MAA)'],                                land:['Attari (Wagah)'] },
-  UAE:           { sea:['Dubai (Jebel Ali)','Abu Dhabi','Sharjah'],                             air:['Dubai (DXB)','Abu Dhabi (AUH)','Sharjah (SHJ)'],                            land:['Abu Dhabi border'] },
-  Turkey:        { sea:['Istanbul','Izmir','Mersin','Gemlik','Derince'],                        air:['Istanbul (IST)','Ankara (ESB)','Izmir (ADB)'],                               land:['Kapikule','Habur'] },
-  Germany:       { sea:['Hamburg','Bremen / Bremerhaven'],                                      air:['Frankfurt (FRA)','Munich (MUC)','Hamburg (HAM)'],                            land:['Frankfurt border'] },
-  Netherlands:   { sea:['Rotterdam','Amsterdam'],                                               air:['Amsterdam (AMS)'],                                                           land:['Rotterdam border'] },
-  Belgium:       { sea:['Antwerp','Ghent'],                                                     air:['Brussels (BRU)'],                                                            land:['Antwerp border'] },
-  Italy:         { sea:['Genoa','Naples','Livorno','Trieste'],                                  air:['Milan Malpensa (MXP)','Rome (FCO)'],                                         land:['Trieste border'] },
-  France:        { sea:['Marseille','Le Havre','Bordeaux'],                                     air:['Paris CDG (CDG)','Lyon (LYS)'],                                              land:['Lyon border'] },
-  Spain:         { sea:['Barcelona','Valencia','Algeciras'],                                    air:['Madrid (MAD)','Barcelona (BCN)'],                                            land:['Barcelona border'] },
-  UK:            { sea:['Felixstowe','Southampton','London Tilbury'],                           air:['London Heathrow (LHR)','Manchester (MAN)'],                                  land:['Dover'] },
-  USA:           { sea:['Los Angeles','New York (NY/NJ)','Miami','Houston','Savannah'],         air:['New York (JFK)','Los Angeles (LAX)','Miami (MIA)','Chicago (ORD)'],          land:['Laredo TX','Detroit'] },
-  Canada:        { sea:['Vancouver','Montreal','Halifax'],                                      air:['Toronto (YYZ)','Montreal (YUL)','Vancouver (YVR)'],                          land:['Windsor','Surrey BC'] },
-  Vietnam:       { sea:['Ho Chi Minh City','Hai Phong','Da Nang'],                             air:['Ho Chi Minh (SGN)','Hanoi (HAN)'],                                           land:['Lao Cai','Mong Cai'] },
-  Bangladesh:    { sea:['Chittagong','Mongla'],                                                 air:['Dhaka (DAC)'],                                                               land:['Benapole'] },
-  Thailand:      { sea:['Bangkok (Laem Chabang)','Bangkok (Klong Toei)'],                      air:['Bangkok (BKK)','Chiang Mai (CNX)'],                                          land:['Nong Khai','Aranyaprathet'] },
-  'South Korea': { sea:['Busan','Incheon','Gwangyang'],                                        air:['Seoul Incheon (ICN)','Busan (PUS)'],                                         land:['—'] },
-  Japan:         { sea:['Tokyo / Yokohama','Osaka / Kobe','Nagoya'],                           air:['Tokyo Narita (NRT)','Osaka Kansai (KIX)','Nagoya (NGO)'],                    land:['—'] },
-  Israel:        { sea:['Haifa','Ashdod'],                                                      air:['Ben Gurion (TLV)'],                                                          land:['Haifa','Ashdod','Allenby Bridge','Nitzana'] },
-  Russia:        { sea:['St. Petersburg','Novorossiysk','Vladivostok'],                         air:['Moscow Sheremetyevo (SVO)','Moscow Domodedovo (DME)','St. Petersburg (LED)'], land:['Moscow','Yekaterinburg','Novosibirsk'] },
-  Australia:     { sea:['Sydney','Melbourne','Brisbane','Fremantle'],                           air:['Sydney (SYD)','Melbourne (MEL)','Brisbane (BNE)'],                           land:['—'] },
-  Kazakhstan:    { sea:['Aktau (Caspian)'],                                                     air:['Almaty (ALA)','Astana (NQZ)'],                                               land:['Khorgos','Dostyk'] },
-  Poland:        { sea:['Gdansk','Gdynia'],                                                     air:['Warsaw (WAW)','Krakow (KRK)'],                                               land:['Warsaw border'] },
-  'Czech Republic':{ sea:['—'],                                                                 air:['Prague (PRG)'],                                                              land:['Prague border'] },
-  Austria:       { sea:['—'],                                                                   air:['Vienna (VIE)'],                                                              land:['Vienna border'] },
-  Switzerland:   { sea:['—'],                                                                   air:['Zurich (ZRH)','Geneva (GVA)'],                                               land:['Basel border'] },
-  Mexico:        { sea:['Manzanillo','Veracruz','Lazaro Cardenas'],                             air:['Mexico City (MEX)','Guadalajara (GDL)'],                                     land:['Nuevo Laredo','Tijuana'] },
-  Brazil:        { sea:['Santos','Rio de Janeiro','Paranagua'],                                 air:['Sao Paulo Guarulhos (GRU)','Rio de Janeiro (GIG)'],                          land:['Foz do Iguacu'] },
+// ── Страны назначения: НДС, пошлина, курс, сборы ────────────────────────────
+const DEST = {
+  Israel:      { cur:'ILS', sym:'₪',   fx:3.65,  vat:18, duty:12, fee1:115,  fee2:95,  broker:290,   local:1800   },
+  USA:         { cur:'USD', sym:'$',   fx:1.00,  vat:0,  duty:5,  fee1:25,   fee2:0,   broker:150,   local:500    },
+  Canada:      { cur:'CAD', sym:'C$',  fx:1.44,  vat:5,  duty:5,  fee1:25,   fee2:0,   broker:200,   local:400    },
+  Germany:     { cur:'EUR', sym:'€',   fx:0.92,  vat:19, duty:4,  fee1:30,   fee2:0,   broker:250,   local:300    },
+  Netherlands: { cur:'EUR', sym:'€',   fx:0.92,  vat:21, duty:4,  fee1:30,   fee2:0,   broker:250,   local:280    },
+  UK:          { cur:'GBP', sym:'£',   fx:0.79,  vat:20, duty:4,  fee1:20,   fee2:0,   broker:200,   local:350    },
+  France:      { cur:'EUR', sym:'€',   fx:0.92,  vat:20, duty:4,  fee1:30,   fee2:0,   broker:250,   local:300    },
+  Australia:   { cur:'AUD', sym:'A$',  fx:1.58,  vat:10, duty:5,  fee1:50,   fee2:0,   broker:300,   local:600    },
+  UAE:         { cur:'AED', sym:'AED ',fx:3.67,  vat:5,  duty:5,  fee1:50,   fee2:0,   broker:200,   local:400    },
+  Turkey:      { cur:'TRY', sym:'₺',   fx:38.0,  vat:20, duty:10, fee1:200,  fee2:0,   broker:500,   local:2000   },
+  Russia:      { cur:'RUB', sym:'₽',   fx:85.0,  vat:20, duty:10, fee1:500,  fee2:0,   broker:5000,  local:15000  },
+  Brazil:      { cur:'BRL', sym:'R$',  fx:5.20,  vat:17, duty:14, fee1:100,  fee2:0,   broker:500,   local:3000   },
+  Mexico:      { cur:'MXN', sym:'$',   fx:17.0,  vat:16, duty:10, fee1:100,  fee2:0,   broker:500,   local:2500   },
+  Kazakhstan:  { cur:'KZT', sym:'₸',   fx:490,   vat:12, duty:10, fee1:2000, fee2:0,   broker:30000, local:100000 },
 };
 
-const DEST_COUNTRIES = ['Israel','USA','Canada','Russia','Germany','Netherlands','UK','France','Australia','UAE','Turkey','Brazil','Mexico','Kazakhstan'];
-const ORIGIN_COUNTRIES = Object.keys(PORTS).filter(c => !DEST_COUNTRIES.includes(c) || true); // all countries can be origin
+// ── Порты ─────────────────────────────────────────────────────────────────────
+const PORTS = {
+  China:       { sea:['Shanghai','Ningbo','Shenzhen','Guangzhou','Tianjin'],       air:['Shanghai PVG','Beijing PEK','Guangzhou CAN'],   land:['Manzhouli','Alashankou'] },
+  India:       { sea:['Mumbai (Nhava Sheva)','Chennai','Mundra'],                  air:['Mumbai BOM','Delhi DEL'],                       land:['Attari'] },
+  UAE:         { sea:['Dubai Jebel Ali','Abu Dhabi'],                              air:['Dubai DXB','Abu Dhabi AUH'],                    land:['Abu Dhabi border'] },
+  Turkey:      { sea:['Istanbul','Mersin','Izmir'],                                air:['Istanbul IST','Izmir ADB'],                     land:['Kapikule','Habur'] },
+  Germany:     { sea:['Hamburg','Bremen'],                                         air:['Frankfurt FRA','Munich MUC'],                   land:['Frankfurt border'] },
+  Netherlands: { sea:['Rotterdam','Amsterdam'],                                    air:['Amsterdam AMS'],                                land:['Rotterdam border'] },
+  UK:          { sea:['Felixstowe','Southampton'],                                 air:['London LHR','Manchester MAN'],                  land:['Dover'] },
+  France:      { sea:['Le Havre','Marseille'],                                     air:['Paris CDG','Lyon LYS'],                         land:['Lyon border'] },
+  USA:         { sea:['Los Angeles','New York','Miami','Houston'],                 air:['New York JFK','Los Angeles LAX','Miami MIA'],   land:['Laredo TX','Detroit'] },
+  Canada:      { sea:['Vancouver','Montreal','Halifax'],                           air:['Toronto YYZ','Montreal YUL'],                   land:['Windsor','Surrey BC'] },
+  Russia:      { sea:['St. Petersburg','Novorossiysk'],                            air:['Moscow SVO','St. Petersburg LED'],               land:['Moscow','Novosibirsk'] },
+  Vietnam:     { sea:['Ho Chi Minh','Hai Phong'],                                 air:['Ho Chi Minh SGN','Hanoi HAN'],                  land:['Lao Cai'] },
+  Thailand:    { sea:['Bangkok Laem Chabang'],                                    air:['Bangkok BKK'],                                  land:['Nong Khai'] },
+  'S.Korea':   { sea:['Busan','Incheon'],                                          air:['Seoul ICN'],                                    land:['—'] },
+  Japan:       { sea:['Tokyo/Yokohama','Osaka/Kobe'],                             air:['Tokyo NRT','Osaka KIX'],                        land:['—'] },
+  Australia:   { sea:['Sydney','Melbourne','Brisbane'],                            air:['Sydney SYD','Melbourne MEL'],                   land:['—'] },
+  Israel:      { sea:['Haifa','Ashdod'],                                           air:['Tel Aviv TLV'],                                 land:['Allenby Bridge','Nitzana'] },
+  Kazakhstan:  { sea:['Aktau'],                                                    air:['Almaty ALA','Astana NQZ'],                      land:['Khorgos','Dostyk'] },
+  Brazil:      { sea:['Santos','Rio de Janeiro'],                                  air:['Sao Paulo GRU'],                                land:['Foz do Iguacu'] },
+  Mexico:      { sea:['Manzanillo','Veracruz'],                                    air:['Mexico City MEX'],                              land:['Nuevo Laredo'] },
+};
 
-// ── STATE ─────────────────────────────────────────────────────
-let transport   = 'sea';
-let currentLang = 'ru';
+// ── Ставки фрахта 2026 (USD/CBM море, USD/кг воздух) ─────────────────────────
+const SEA = {
+  China:   { Israel:100, USA:120, Canada:130, Germany:140, Netherlands:140, UK:145, France:140, Australia:90,  Russia:155, UAE:80,  Brazil:160, Mexico:130, Kazakhstan:140 },
+  India:   { Israel:110, USA:135, Canada:140, Germany:140, Netherlands:140, UK:145, France:140, Australia:100, Russia:150, UAE:70,  Brazil:165, Mexico:140, Kazakhstan:145 },
+  UAE:     { Israel:60,  USA:150, Canada:155, Germany:100, Netherlands:100, UK:105, France:100, Australia:120, Russia:130, Brazil:170, Mexico:155, Kazakhstan:90 },
+  Turkey:  { Israel:60,  USA:145, Canada:150, Germany:80,  Netherlands:80,  UK:85,  France:80,  Australia:130, Russia:100, UAE:70,  Brazil:160, Mexico:150, Kazakhstan:100 },
+  Germany: { Israel:75,  USA:130, Canada:135, Netherlands:30, UK:40, France:35, Australia:150, Russia:90, UAE:95, Brazil:145, Mexico:140, Kazakhstan:95 },
+  USA:     { Israel:150, Canada:80, Germany:130, Netherlands:130, UK:125, France:130, Australia:140, Russia:160, UAE:145, Brazil:90, Mexico:70, Kazakhstan:155 },
+  default: { default:120 }
+};
+const AIR = {
+  China:   { Israel:6.0, USA:5.0, Canada:5.2, Germany:5.5, Netherlands:5.5, UK:5.8, France:5.5, Australia:5.0, Russia:7.0, UAE:4.5 },
+  India:   { Israel:6.5, USA:6.2, Germany:6.0, UAE:4.0 },
+  UAE:     { Israel:4.0, USA:8.0, Germany:5.5, UK:5.5 },
+  Turkey:  { Israel:4.5, Germany:3.5, UK:4.0 },
+  Germany: { Israel:6.0, USA:7.0, UK:3.5, France:3.0 },
+  USA:     { Israel:9.0, Canada:4.0, Germany:7.0, UK:7.0 },
+  default: { default:7.0 }
+};
 
-// ── DOM HELPERS ───────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const num = id => { const v = Number.parseFloat($(id)?.value); return Number.isNaN(v) || v < 0 ? 0 : v; };
-const fmt = (v, c='ILS') => new Intl.NumberFormat('en-US',{style:'currency',currency:c,minimumFractionDigits:2}).format(v||0);
-
-function buildSelect(el, options) {
-  el.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
+function seaRate(from, to) {
+  const row = SEA[from] || SEA.default;
+  return row[to] || row.default || SEA.default.default;
+}
+function airRate(from, to) {
+  const row = AIR[from] || AIR.default;
+  return row[to] || row.default || AIR.default.default;
 }
 
-// ── INIT ──────────────────────────────────────────────────────
-function populateCountries() {
-  buildSelect($('countryFrom'), ORIGIN_COUNTRIES);
-  buildSelect($('countryTo'),   DEST_COUNTRIES);
+// ── Состояние ─────────────────────────────────────────────────────────────────
+let mode = 'sea';
+let lang = 'ru';
+let cfg  = DEST['Israel'];
+
+const $  = id => document.getElementById(id);
+const nv = id => { const v = parseFloat($(id)?.value); return isNaN(v) || v < 0 ? 0 : v; };
+const fm = (v, sym) => sym + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+// ── Списки ────────────────────────────────────────────────────────────────────
+function fill(id, arr) { $(id).innerHTML = arr.map(v => `<option>${v}</option>`).join(''); }
+
+function initCountries() {
+  fill('countryFrom', Object.keys(PORTS));
+  fill('countryTo',   Object.keys(DEST));
   $('countryFrom').value = 'China';
   $('countryTo').value   = 'Israel';
 }
 
-function onCountryChange() {
+function onRoute() {
   const from = $('countryFrom').value;
   const to   = $('countryTo').value;
-  buildSelect($('portFrom'), (PORTS[from]||{})[transport] || ['—']);
-  buildSelect($('portTo'),   (PORTS[to]  ||{})[transport] || ['—']);
-  scheduleRecalc();
+  fill('portFrom', (PORTS[from] || {})[mode] || ['—']);
+  fill('portTo',   (PORTS[to]   || {})[mode] || ['—']);
+  applyDest(to);
+  calc();
 }
 
-function setTransport(t) {
-  transport = t;
-  ['sea','air','land'].forEach(x => $('tb-'+x).classList.toggle('active', x===t));
-  onCountryChange();
+// ── Страна назначения → обновить поля ────────────────────────────────────────
+function applyDest(country) {
+  cfg = DEST[country] || DEST['Israel'];
+  $('fxRate').value   = cfg.fx;
+  $('currency').value = cfg.cur;
+  $('dutyRate').value = cfg.duty;
+  $('vatRate').value  = cfg.vat;
+  $('fee1').value     = cfg.fee1;
+  $('fee2').value     = cfg.fee2;
+  $('broker').value   = cfg.broker;
+  $('localLog').value = cfg.local;
 }
 
-// ── LANGUAGE ─────────────────────────────────────────────────
-function setLang(lang) {
-  currentLang = lang;
-  const tr = LANG[lang];
-  document.documentElement.lang = lang;
+// ── Транспорт ─────────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  ['sea','air','land'].forEach(x => $('tb-'+x).classList.toggle('active', x === m));
+  onRoute();
+}
+
+// ── Язык ─────────────────────────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  const tr = T[l];
+  document.documentElement.lang = l;
   document.documentElement.dir  = tr.dir;
-  ['ru','en','he'].forEach(l => $('btn-'+l).classList.toggle('active', l===lang));
-
+  ['ru','en','he'].forEach(x => $('btn-'+x).classList.toggle('active', x === l));
   Object.entries(tr).forEach(([key, val]) => {
-    if (key==='dir' || key==='loading') return;
+    if (key === 'dir') return;
     const el = $(key);
     if (!el) return;
     if (el.tagName === 'LABEL') {
-      // set text node without disturbing child input/select
-      let tn = [...el.childNodes].find(n => n.nodeType===3);
+      let tn = [...el.childNodes].find(n => n.nodeType === 3);
       if (tn) tn.textContent = val;
       else el.insertBefore(document.createTextNode(val), el.firstChild);
     } else {
       el.textContent = val;
     }
   });
-  $('loadingIndicator').textContent = tr['loading'];
 }
 
-// ── CUSTOMS AUTO-FILL ─────────────────────────────────────────
-const CUSTOMS_IDS = ['dutyRate','vatRate','fxTax','fxGoods','computerFee','securityFee','localLogistics','brokerage'];
-const userEdited  = new Set();
-CUSTOMS_IDS.forEach(id => $(id)?.addEventListener('input', () => userEdited.add(id)));
+// ── Авторасчёт доставки ───────────────────────────────────────────────────────
+function autoShip() {
+  const from = $('countryFrom').value;
+  const to   = $('countryTo').value;
+  const wt   = nv('weight');
+  const vol  = nv('volume');
 
-const routeFactor = () => {
-  const f = $('countryFrom').value.toLowerCase();
-  const t = $('countryTo').value.toLowerCase();
-  if (!f||!t||f===t) return 0.35;
-  const reg = { china:'as', india:'as', vietnam:'as', bangladesh:'as', thailand:'as', 'south korea':'as', japan:'as',
-                uae:'me', israel:'me', turkey:'eu', germany:'eu', netherlands:'eu', belgium:'eu',
-                italy:'eu', france:'eu', spain:'eu', uk:'eu', usa:'na', canada:'na' };
-  return reg[f]&&reg[t]&&reg[f]===reg[t] ? 0.8 : 1.18;
-};
-
-const shippingEstimate = () => {
-  const vol=num('volume'), wt=num('weight'), rf=routeFactor();
-  let base=0;
-  if (transport==='sea') { const cbm=vol>0?vol:Math.max(0.1,wt/350); base=Math.max(220,cbm*115); }
-  else if (transport==='air') { const ch=Math.max(wt,vol*167,1); base=Math.max(160,ch*6.8); }
-  else { base=Math.max(140,Math.max(wt*1.15,vol*78)); }
-  return base*rf;
-};
-
-const fallbackCustoms = () => {
-  const wt=num('weight'), vol=num('volume'), price=num('price');
-  const handling=Math.max(1,Math.ceil(Math.max(wt/120,vol/1.5)));
-  const fxG=Math.max(0.0001,num('fxGoods'));
-  return {
-    dutyRate:0, vatRate:18,
-    fxTax: Number(fxG.toFixed(4)),
-    computerFee:   Number((32+handling*6).toFixed(2)),
-    securityFee:   Number((38+handling*5).toFixed(2)),
-    localLogistics:Number((1800+wt*1.9+vol*420).toFixed(2)),
-    brokerage:     Number((290+price*0.012).toFixed(2)),
-    source:'fallback'
-  };
-};
-
-// ── RECALC ────────────────────────────────────────────────────
-let recalcTimer=null, recalcVersion=0;
-
-async function recalc() {
-  const ver = ++recalcVersion;
-  $('loadingIndicator').style.display='inline';
-
-  const customs = fallbackCustoms();
-  if (ver!==recalcVersion) return;
-
-  CUSTOMS_IDS.forEach(k => {
-    const el=$(k);
-    if (el && !userEdited.has(k) && customs[k]!==undefined) el.value=customs[k];
-  });
-
-  $('loadingIndicator').style.display='none';
-  $('marketInfo').textContent=`Source: ${customs.source}`;
-
-  // shipping
-  const isAuto=$('autoShipping').checked;
-  const shEl=$('shipping');
-  shEl.readOnly=isAuto;
-  const shipping=isAuto?shippingEstimate():num('shipping');
-  if(isAuto) shEl.value=shipping.toFixed(2);
-
-  // calc
-  const price=num('price'), ins=num('insurance');
-  const fxGoods=Math.max(0.0001,num('fxGoods'));
-  const fxTax  =Math.max(0.0001,num('fxTax'));
-  const dutyRate=num('dutyRate')/100;
-  const vatRate =num('vatRate')/100;
-  const qty=Math.max(1,num('quantity'));
-
-  const intlUsd    =shipping+ins;
-  const cifNis     =(price+intlUsd)*fxGoods;
-  const taxBaseNis =(price+intlUsd)*fxTax;
-  const dutyNis    =taxBaseNis*dutyRate;
-  const vatNis     =(taxBaseNis+dutyNis)*vatRate;
-  const customsTotal=dutyNis+vatNis+num('computerFee')+num('securityFee');
-  const totalNis   =cifNis+customsTotal+num('localLogistics')+num('brokerage');
-  const totalUsd   =totalNis/fxGoods;
-
-  $('totalNis').textContent        =fmt(totalNis,'ILS');
-  $('totalUsd').textContent        =fmt(totalUsd,'USD');
-  $('cifNis').textContent          =fmt(cifNis,'ILS');
-  $('taxBaseNis').textContent      =fmt(taxBaseNis,'ILS');
-  $('dutyNis').textContent         =fmt(dutyNis,'ILS');
-  $('vatNis').textContent          =fmt(vatNis,'ILS');
-  $('customsTotal').textContent    =fmt(customsTotal,'ILS');
-  $('localLogisticsRow').textContent=fmt(num('localLogistics'),'ILS');
-  $('brokerageRow').textContent    =fmt(num('brokerage'),'ILS');
-  $('perUnit').textContent         =fmt(totalNis/qty,'ILS');
+  if (mode === 'sea') {
+    const cbm  = vol > 0 ? vol : Math.max(1, wt / 350);
+    const cbmC = Math.max(1, cbm);
+    const portFee = (to === 'Israel') ? (cbmC <= 4 ? 115 : 210) : 0;
+    return cbmC * seaRate(from, to) + portFee;
+  }
+  if (mode === 'air') {
+    const volKg = vol * 167;
+    const chKg  = Math.max(wt, volKg, 45);
+    return chKg * airRate(from, to);
+  }
+  const dist = { Turkey:1.2, Russia:2.5, Kazakhstan:2.8, Germany:3.5, default:3.0 };
+  const d = dist[from] || dist.default;
+  return Math.max(200, (wt * 1.2 + vol * 80) * d);
 }
 
-function scheduleRecalc() {
-  clearTimeout(recalcTimer);
-  recalcTimer=setTimeout(recalc,200);
+// ── Расчёт ───────────────────────────────────────────────────────────────────
+function calc() {
+  const isAuto = $('autoShip').checked;
+  const shipEl = $('shipping');
+  shipEl.readOnly = isAuto;
+  if (isAuto) shipEl.value = autoShip().toFixed(2);
+
+  const price   = nv('price');
+  const ship    = nv('shipping');
+  const ins     = nv('insurance');
+  const fx      = Math.max(0.0001, nv('fxRate'));
+  const dutyPct = nv('dutyRate') / 100;
+  const vatPct  = nv('vatRate')  / 100;
+  const qty     = Math.max(1, nv('qty'));
+  const sym     = cfg.sym;
+
+  const cifLoc  = (price + ship + ins) * fx;
+  const dutyLoc = cifLoc * dutyPct;
+  const vatLoc  = (cifLoc + dutyLoc) * vatPct;
+  const fees    = nv('fee1') + nv('fee2') + nv('broker');
+  const logLoc  = nv('localLog');
+  const total   = cifLoc + dutyLoc + vatLoc + fees + logLoc;
+
+  $('totalLocal').textContent = fm(total, sym);
+  $('totalUsd').textContent   = '≈ $' + (total / fx).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' USD';
+
+  $('r-cif').textContent  = fm(cifLoc,  sym);
+  $('r-duty').textContent = fm(dutyLoc, sym);
+  $('r-vat').textContent  = fm(vatLoc,  sym);
+  $('r-fee').textContent  = fm(fees,    sym);
+  $('r-log').textContent  = fm(logLoc,  sym);
+  $('r-unit').textContent = fm(total / qty, sym);
 }
 
-// ── BIND INPUTS ───────────────────────────────────────────────
-document.querySelectorAll('input,select').forEach(el => {
-  if(el.id!=='countryFrom'&&el.id!=='countryTo')
-    el.addEventListener('input',scheduleRecalc);
+let timer;
+function go() { clearTimeout(timer); timer = setTimeout(calc, 250); }
+
+document.querySelectorAll('input, select').forEach(el => {
+  if (el.id === 'countryFrom' || el.id === 'countryTo') return;
+  el.addEventListener('input', go);
 });
 
-// ── START ─────────────────────────────────────────────────────
-populateCountries();
-onCountryChange();
+// ── Старт ─────────────────────────────────────────────────────────────────────
+initCountries();
+onRoute();
 setLang('ru');
-recalc();
+calc();
 </script>
 </body>
 </html>
